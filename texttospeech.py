@@ -11,11 +11,10 @@ import pyttsx3
 # MQTT broker information
 mqtt_broker = "localhost"
 mqtt_port = 1883
-mqtt_topic = "assistant_response"
 api_key = os.getenv('ELEVENLABS_API_KEY')
 api_endpoint = "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM"
 mqtt_client = mqtt.Client()
-
+pygame.mixer.init()
 def getElevenLabsAudio(text):
     # Define the request body
     request_body = {
@@ -40,7 +39,6 @@ def getElevenLabsAudio(text):
 
     audio_bytes = io.BytesIO(response.content)
      # Load the audio bytes using Pygame mixer
-    pygame.mixer.init()
     pygame.mixer.music.load(audio_bytes)
 
     # Play the audio file
@@ -53,17 +51,24 @@ def getTTS3Audio(text):
     engine.runAndWait()
 
 def on_message(client, userdata, message):
-    # Get the text from the incoming MQTT message
-    text = message.payload.decode()
-    print("got text {}".format(text))
+    if message.topic == "assistant_response":
+        # Get the text from the incoming MQTT message
+        text = message.payload.decode()
+        print("got text {}".format(text))
 
-    # getElevenLabsAudio(text)
-    getTTS3Audio(text)
+        # getElevenLabsAudio(text)
+        getTTS3Audio(text)
+    if message.topic == "hotword_detected":
+        # Load the ping sound file
+        ping_sound = pygame.mixer.Sound('ping.wav')
+        # Play the ping sound once
+        ping_sound.play()
    
 
 # Connect to MQTT broker and subscribe to topic
 mqtt_client.connect(mqtt_broker, mqtt_port)
-mqtt_client.subscribe(mqtt_topic)
+mqtt_client.subscribe("assistant_response")
+mqtt_client.subscribe('hotword_detected')
 
 # Set MQTT client's message callback function
 mqtt_client.on_message = on_message
