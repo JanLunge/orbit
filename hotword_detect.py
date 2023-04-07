@@ -3,6 +3,9 @@ import pyaudio
 import paho.mqtt.client as mqtt
 import struct 
 from datetime import datetime as dt 
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 # MQTT broker information
 mqtt_broker = "localhost"
@@ -18,7 +21,8 @@ audio_rate = 16000
 # Initialize Porcupine
 porcupine = pvporcupine.create(
     keyword_paths=["./atlas.ppn"], 
-    access_key="HtHCR915oUKYsDHfMNmjeFQhduql86VRqFgPlyrSu6+maoVQHjHJWA=="
+    access_key=os.getenv('PORCUPINE_ACCESS_KEY')
+
     )
 
 # Define MQTT callback function
@@ -41,4 +45,5 @@ mqtt_client.subscribe(mqtt_topic)
 # Set MQTT callback function
 mqtt_client.on_message = on_message
 
+print('listening for Hotword `Atlas`')
 mqtt_client.loop_forever()
