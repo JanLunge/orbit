@@ -106,6 +106,7 @@ mqtt_client.subscribe('hotword_detected')
 # Set MQTT client's message callback function
 mqtt_client.on_message = on_message
 
+print('waiting for hotword')
 # Start MQTT client loop to listen for messages
 mqtt_client.loop_forever()
 

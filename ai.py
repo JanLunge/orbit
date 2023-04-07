@@ -59,5 +59,6 @@ mqtt_client.subscribe(mqtt_topic)
 # Set MQTT client's message callback function
 mqtt_client.on_message = on_message
 
+print('waiting for recognized text')
 # Start MQTT client loop to listen for messages
 mqtt_client.loop_forever()

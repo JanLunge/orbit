@@ -21,5 +21,7 @@ and
 `pip install pvporcupine`
 - speech
 `speech_recognition whisper`
+- tts 
+`pip install pygame`
 
 some setup steps for pyaudio for mac are still missing
