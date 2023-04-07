@@ -10,6 +10,10 @@ and
 - hotword_detect listens for hotword with porcupine and sends this event via mqtt
 - speech uses whisper to recognize speech
 - ai uses chatgpt api to respond to the user
+- tts
+    - using elevenlabs for best quality
+    - maybe using python coqui-ai/TTS for price
+    - pyttsx3 for simplicity
 
 
 # dependencies

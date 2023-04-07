@@ -6,6 +6,7 @@ import paho.mqtt.client as mqtt
 import os
 from dotenv import load_dotenv
 load_dotenv()
+import pyttsx3
 
 # MQTT broker information
 mqtt_broker = "localhost"
@@ -15,14 +16,7 @@ api_key = os.getenv('ELEVENLABS_API_KEY')
 api_endpoint = "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM"
 mqtt_client = mqtt.Client()
 
-def on_message(client, userdata, message):
-    # Get the text from the incoming MQTT message
-    text = message.payload.decode()
-    print("got text {}".format(text))
-
-    # Initialize MQTT client
-    mqtt_client = mqtt.Client()
-
+def getElevenLabsAudio(text):
     # Define the request body
     request_body = {
         "text": text,
@@ -43,14 +37,29 @@ def on_message(client, userdata, message):
 
     # Send the request to the API endpoint and get the audio response
     response = requests.post(api_endpoint, headers=request_headers, data=request_body_json)
-    audio_bytes = io.BytesIO(response.content)
 
-    # Load the audio bytes using Pygame mixer
+    audio_bytes = io.BytesIO(response.content)
+     # Load the audio bytes using Pygame mixer
     pygame.mixer.init()
     pygame.mixer.music.load(audio_bytes)
 
     # Play the audio file
     pygame.mixer.music.play()
+
+
+def getTTS3Audio(text):
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+
+def on_message(client, userdata, message):
+    # Get the text from the incoming MQTT message
+    text = message.payload.decode()
+    print("got text {}".format(text))
+
+    # getElevenLabsAudio(text)
+    getTTS3Audio(text)
+   
 
 # Connect to MQTT broker and subscribe to topic
 mqtt_client.connect(mqtt_broker, mqtt_port)
