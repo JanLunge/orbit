@@ -1,8 +1,9 @@
-# Mqtt server
+# setup
+- Mqtt server
 `brew services start mosquitto`
 and 
 `brew services stop mosquitto`
-
+- openai api key into .env named OPENAI_API_KEY
 
 # services
 - audio_satelite streams audio via mqtt
@@ -12,4 +13,13 @@ and
 
 
 # dependencies
-pip install python-dotenv
+- audio_satelite
+`pip install paho-mqtt`
+- ai
+`pip install python-dotenv openai paho-mqtt`
+- hotword
+`pip install pvporcupine`
+- speech
+`speech_recognition whisper`
+
+some setup steps for pyaudio for mac are still missing
