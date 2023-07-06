@@ -2,6 +2,16 @@
 # Orbit
 a modular platform for building a voice based LLM assistant
 
+# services
+* ⚙️ Command service for custom executable commands
+* ❗️ Hotword detection with porcupine
+* 🧠 LLM AI integration with OpenAi or local inference
+* 🎧 whisper speech recognition
+* 🎤 audio streaming via mqtt (audio_satelite)
+* 💬 TTS via elevenlabs or pyttsx3
+
+![demo](./assets/demo-shell.gif)
+
 ## what is this?
 Build your own jarvis or alexa/siri/google assistant with this modular platform. 
 it will listen for audio with a microphone streamer via mqtt, 
@@ -34,17 +44,9 @@ and
 - a porcupine hotword model and access key
 - an elevenlabs api key for tts ()
 
-# services
-* ⚙️ Command service for custom executable commands
-* ❗️ Hotword detection with porcupine
-* 🧠 LLM AI integration with OpenAi or local inference
-* 🎧 whisper speech recognition
-* 🎤 audio streaming via mqtt (audio_satelite)
-* 💬 TTS via elevenlabs or pyttsx3
-
 
 
 # Setup
-install the dependencies with `poetry`
-
-to run it just run the `python3 src/main.py` command
+1. get a poetry shell with `poetry shell`
+2. install the dependencies with `poetry install`
+3. then run `python3 main.py` to start the program

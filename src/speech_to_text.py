@@ -74,7 +74,7 @@ def run():
         stream.close()
 
         # Save recorded audio to WAV file
-        with wave.open('../recorded_audio.wav', 'wb') as wf:
+        with wave.open('recorded_audio.wav', 'wb') as wf:
             wf.setnchannels(audio_channels)
             wf.setsampwidth(audio.get_sample_size(audio.get_format_from_width(2)))
             wf.setframerate(audio_rate)
@@ -85,7 +85,7 @@ def run():
         #     audio_data = r.record(audio_file)
 
         try:
-            result_text = recognize_fast_whisper('../recorded_audio.wav')
+            result_text = recognize_fast_whisper('recorded_audio.wav')
             # Print recognized speech
             # text = r.recognize_google(audio_data)
             # print("You said:", text)

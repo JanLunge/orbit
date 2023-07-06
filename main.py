@@ -18,7 +18,7 @@ if __name__ == '__main__':
     scripts = ['text_to_speech.py', 'ai.py', 'audio_satelite.py', 'commands.py', 'hotword_detect.py', 'speech_to_text.py']
 
     for script in scripts:
-        process = subprocess.Popen(["python3", script])
+        process = subprocess.Popen(["python3", "src/"+script])
         print("🚀 started module", process.pid, script)
         processes.append(process)
 
