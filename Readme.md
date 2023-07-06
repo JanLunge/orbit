@@ -41,5 +41,8 @@ and
 * 💬 TTS via elevenlabs or pyttsx3
 
 
-# dependencies
+
+# Setup
 install the dependencies with `poetry`
+
+to run it just run the `python3 src/main.py` command
