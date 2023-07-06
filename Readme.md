@@ -11,6 +11,8 @@ then the text will be sent to an AI module that will return a response
 then the text will be sent to a command module that will execute the command
 then the response will be sent to a TTS module that will speak the response
 
+This has been tested on an m1 mac
+
 ## TODOs:
 - [ ] implement function calling in the ai module so the ai can trigger commands
 - [ ] create a management interface for the function calling
