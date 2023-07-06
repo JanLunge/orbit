@@ -1,3 +1,5 @@
 .env
 recorded_audio.wav
 .DS_Store
+backups
+.idea

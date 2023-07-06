@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "orbit"
+version = "0.1.0"
+description = ""
+authors = ["Jan Lunge <janlunge1993@gmail.com>"]
+readme = "README.md"
+packages = [{include = "atlas_mqtt"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+speechrecognition = "^3.8.1"
+openai = "^0.27.8"
+requests = "^2.31.0"
+paho-mqtt = "^1.6.1"
+python-dotenv = "^1.0.0"
+pyaudio = "^0.2.13"
+pvporcupine = "^2.2.0"
+pygame = "^2.4.0"
+faster-whisper = "^0.6.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,12 +1,12 @@
 import requests
 import json
 import io
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import paho.mqtt.client as mqtt
-import os
 from dotenv import load_dotenv
 load_dotenv()
-import pyttsx3
 
 # MQTT broker information
 mqtt_broker = "localhost"
@@ -46,6 +46,7 @@ def getElevenLabsAudio(text):
 
 
 def getTTS3Audio(text):
+    import pyttsx3
     engine = pyttsx3.init()
     engine.say(text)
     engine.runAndWait()
@@ -73,6 +74,6 @@ mqtt_client.subscribe('hotword_detected')
 # Set MQTT client's message callback function
 mqtt_client.on_message = on_message
 
-print('waiting for text to speak')
+print('✅ TTS ready')
 # Start MQTT client loop to listen for messages
 mqtt_client.loop_forever()
