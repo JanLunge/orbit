@@ -35,6 +35,10 @@ This has been tested on an m1 mac
 - [x] support local inference with custom models
 - [ ] switch to something like fastchat instead of llama.cpp for local inference 
 - [ ] support large context models
+- [ ] support multiple wake words
+- [ ] saving context in interactions for the ai
+- [ ] vector store for permanent information?
+- [ ] already speak chunks of responses when streaming inference content to speed up response time
 
 current token limitations make the function calling not really feasible but in the close future you will be able to use your computer or other api apps just with your voice,
 AI will be the interface between you and your computer. get in now and be ready for the future!
@@ -49,9 +53,9 @@ and
 * a working `pyaudio` installation
 
 # optional
-- openai api key into .env named OPENAI_API_KEY (if you use chatgpt in th eai.py file)
+- openai api key into .env named OPENAI_API_KEY (if you use chatgpt in the ai.py file)
 - a porcupine hotword model and access key
-- an elevenlabs api key for tts ()
+- an elevenlabs api key for tts
 
 
 
