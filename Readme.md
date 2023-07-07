@@ -39,6 +39,9 @@ This has been tested on an m1 mac
 - [ ] saving context in interactions for the ai
 - [ ] vector store for permanent information?
 - [ ] already speak chunks of responses when streaming inference content to speed up response time
+- [ ] ignore the hotword if the ai is speaking or the user is speaking
+- [ ] test if instruct models work better as agents
+- [ ] figure out a way for the agent to still preserve character and answer normal questions casually
 
 current token limitations make the function calling not really feasible but in the close future you will be able to use your computer or other api apps just with your voice,
 AI will be the interface between you and your computer. get in now and be ready for the future!
@@ -63,3 +66,7 @@ and
 1. get a poetry shell with `poetry shell`
 2. install the dependencies with `poetry install`
 3. then run `python3 main.py` to start the program
+
+# Notes
+using local models works best in simple mode as most ai models do not work well with the reasoning chains in langchain and will produce nonsense
+using openai works very well as agent in the advanced mode

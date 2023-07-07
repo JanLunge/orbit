@@ -4,22 +4,129 @@ import requests
 import os
 import json
 from dotenv import load_dotenv
+from langchain import LlamaCpp, LLMChain, PromptTemplate
+from langchain.agents import ZeroShotAgent, AgentExecutor
+
 load_dotenv()
 import threading
 import time
 import setproctitle
 
+prompt_history = []
+
+class localLangChain:
+    agent_chain = None
+    # functions
+    from langchain.agents import Tool
+    from langchain.tools import DuckDuckGoSearchRun
+    search = DuckDuckGoSearchRun()
+    # def search(query):
+    #     print("searching for", query)
+    #     return "the creator is Jan Lunge, a software engineer from Germany"
+    #
+    def getTime(query):
+        print("getting time", query)
+        return time.strftime("%H:%M:%S", time.localtime())
+    def remember(query):
+        print("remembering", query)
+        return "you will remember " + query
+
+    tools = [
+        Tool(
+            name="Remember",
+            func=remember,
+            description="useful for when you need to remember something"
+        ),
+        Tool(
+            name="Current Search",
+            func=search,
+            description="useful for when you need to answer questions about current events or the current state of the world"
+        ),
+        Tool(
+            name="time",
+            func=getTime,
+            description="useful for getting the current time"
+        ),
+    ]
+    # modes
+    # simple = LLMChain with prompt template and memory
+    # advanced = LLMAgent with tools history and memory
+    # and select between local model and OpenAI
+    from langchain.memory import ConversationBufferMemory
+    memory = ConversationBufferMemory(memory_key="chat_history")
+    mode = os.getenv('AI_MODE')
+    provider = os.getenv("AI_PROVIDER")
+    from langchain import OpenAI
+    if provider == "local":
+        print("local mode")
+        llm = LlamaCpp(model_path="./models/" + os.getenv('MODEL_PATH'), verbose=False)
+    else:
+        print("openai mode")
+        llm = OpenAI(temperature=0)
+    # TODO: local history does not use the same template as the local model HUMAN/AI vs USER/ASSISTANT
+    if(mode == "simple"):
+        print("simple mode")
+        from langchain.callbacks.manager import CallbackManager
+        from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+        callback_manager = CallbackManager([StreamingStdOutCallbackHandler()])
+        callback_manager = callback_manager
+        prompt = PromptTemplate(template="""
+{chat_history}
+USER: {input}
+ASSISTANT:
+""", input_variables=["input", "chat_history"])
+        llm_chain = LLMChain(prompt=prompt, llm=llm, verbose=True, memory=memory)
+        agent_chain = llm_chain
+    elif(mode == "agent"):
+        print("agent mode")
+        from langchain.agents import AgentType
+        from langchain.agents import initialize_agent
+        suffix = """Begin
+        {chat_history}
+        Question: {input}
+        {agent_scratchpad}"""  # Let's work this out in a step by step way to be sure we have the right answer.!
+        prefix = """Have a conversation with a human, answering the following questions as best you can. Most human tasks dont require tools like remembering or answering, You have access to the following tools:"""
+        prompt = ZeroShotAgent.create_prompt(
+            tools,
+            prefix=prefix,
+            suffix=suffix,
+            input_variables=["input", "chat_history", "agent_scratchpad"],
+        )
+
+        # agent = ZeroShotAgent(llm_chain=llm_chain, tools=tools, verbose=True)
+        # agent_chain = AgentExecutor.from_agent_and_tools(
+        #    agent=agent, tools=tools, verbose=True, memory=memory
+        # )
+    # llm_chain.run(question)
+        agent_chain = initialize_agent(tools, llm, agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION, verbose=True,
+                                       memory=memory)
 
 def run():
+    def generatePrompt(text):
+        prompt = ""
+        max_items = 3  # Maximum number of items to take from prompt history
+        items_to_take = min(max_items, len(prompt_history))
+
+        items_taken = prompt_history[-items_to_take:]
+        print("history used:", items_taken)
+        for i in items_taken:
+            prompt += "USER: " + i["user"] + " ASSISTANT: " + i["assistant"] + "\n"
+        prompt += "USER: " + text + " ASSISTANT:"
+        print(prompt)
+        return prompt
+
     def computeLocal(text):
         # import fastchat
         # fastchat.load_model()
-        from llama_cpp import Llama
-        llm = Llama(model_path="./models/"+ os.getenv('MODEL_PATH'))
-        prompt = "USER: {} ASSISTANT:".format(text)
+        agent_chain = localLangChain.agent_chain
+        result = agent_chain.run(input=text)
+        print(result)
+        return result
+        prompt = generatePrompt(text)
         output = llm(prompt, max_tokens=200, stop=["USER:", "\n"])
         response = output['choices'][0]["text"]
         print(response)
+        prompt_history.append({"user":text, "assistant":response})
         return response
 
     def compute_OpenAI(text):
@@ -130,6 +237,8 @@ def run():
         # Get the text from the incoming MQTT message
         text = message.payload.decode()
         print("User Input for AI: {}".format(text))
+        if text.strip() == "":
+            return
         history = ""
         ended = False
         maxIterations = 2
@@ -141,10 +250,11 @@ def run():
         #print("proompt:", generateProompt(goal, history))
 
         provider = os.getenv("AI_PROVIDER")
-        if(provider == "openai"):
-            response = compute_OpenAI(text)
-        elif(provider == "local"):
-            response = computeLocal(text)
+        # response = ""
+        # if(provider == "openai"):
+        #     response = compute_OpenAI(text)
+        # elif(provider == "local"):
+        response = computeLocal(text)
         print("AI response:", response)
             #bot_response = json.loads(bot_response)
             #print("Bot's response:", json.dumps(bot_response, indent=2))
