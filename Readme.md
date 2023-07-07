@@ -32,7 +32,9 @@ This has been tested on an m1 mac
 ## TODOs:
 - [ ] implement function calling in the ai module so the ai can trigger commands
 - [ ] create a management interface for the function calling
-- [ ] support local inference with custom models
+- [x] support local inference with custom models
+- [ ] switch to something like fastchat instead of llama.cpp for local inference 
+- [ ] support large context models
 
 current token limitations make the function calling not really feasible but in the close future you will be able to use your computer or other api apps just with your voice,
 AI will be the interface between you and your computer. get in now and be ready for the future!
