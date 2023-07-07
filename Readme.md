@@ -11,10 +11,10 @@ a modular platform for building a voice based LLM assistant</h4>
 # services
 * ⚙️ Command service for custom executable commands
 * ❗️ Hotword detection with porcupine
-* 🧠 LLM AI integration with OpenAi or local inference
+* 🧠 LLM AI integration with OpenAi or local inference (llama.cpp)
 * 🎧 whisper speech recognition
 * 🎤 audio streaming via mqtt (audio_satelite)
-* 💬 TTS via elevenlabs or pyttsx3
+* 💬 TTS via elevenlabs, pyttsx3 or macos say
 
 ![demo](./assets/demo-shell.gif)
 

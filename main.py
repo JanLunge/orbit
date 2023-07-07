@@ -20,8 +20,9 @@ def handle_termination(signum, frame):
 
 if __name__ == '__main__':
     import subprocess
-
     import setproctitle
+    # clear terminal
+    subprocess.call('clear', shell=True)
     scripts = ['text_to_speech.py', 'ai.py', 'audio_satelite.py', 'commands.py', 'hotword_detect.py', 'speech_to_text.py']
 
 
@@ -33,6 +34,7 @@ if __name__ == '__main__':
         process = subprocess.Popen(["python3", "src/"+script], preexec_fn=lambda: set_process_name("CustomProcessName"))
         print("🚀 started module", process.pid, script)
         processes.append(process)
+
 
     # Register the signal handler for termination signals
     signal.signal(signal.SIGINT, handle_termination)

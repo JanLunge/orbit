@@ -31,7 +31,8 @@ def run():
     mqtt_client = mqtt.Client()
 
     def recognize_fast_whisper(audio_file):
-        model = WhisperModel("large-v2", device="cpu", compute_type="int8") # or "cuda"
+        # variants are large-v2
+        model = WhisperModel("base", device="cpu", compute_type="int8") # or "cuda"
         segments, info = model.transcribe(audio_file, beam_size=5)
         print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
         result_text = []
@@ -108,7 +109,7 @@ def run():
     # Define callback function for MQTT client to process incoming messages
     def on_message(client, userdata, message):
         if message.topic == "hotword_detected":
-            print("Listening for commands!")
+            print("Listening for Speech!")
             record_audio()
 
     # Connect to MQTT broker and subscribe to topic
