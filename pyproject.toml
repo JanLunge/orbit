@@ -17,6 +17,9 @@ pyaudio = "^0.2.13"
 pvporcupine = "^2.2.0"
 pygame = "^2.4.0"
 faster-whisper = "^0.6.0"
+pyttsx3 = "^2.90"
+pyobjc = "^9.2"
+mac-say = "^2020.12.3"
 
 
 [build-system]

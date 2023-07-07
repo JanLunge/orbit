@@ -1,6 +1,12 @@
 ![header](./assets/orbit-header.png)
-# Orbit
-a modular platform for building a voice based LLM assistant
+<h1 align="center">Orbit
+</h1>
+<h4 align="center">
+a modular platform for building a voice based LLM assistant</h4>
+<p align="center">
+    <a href="https://github.com/JanLunge/orbit/stargazers"><img src="https://img.shields.io/github/stars/JanLunge/orbit" alt="Stars Badge"/></a>
+    <a href="https://github.com/JanLunge/orbit/network/members"><img src="https://img.shields.io/github/forks/JanLunge/orbit" alt="Forks Badge"/></a>
+</p>
 
 # services
 * ⚙️ Command service for custom executable commands
@@ -26,6 +32,7 @@ This has been tested on an m1 mac
 ## TODOs:
 - [ ] implement function calling in the ai module so the ai can trigger commands
 - [ ] create a management interface for the function calling
+- [ ] support local inference with custom models
 
 current token limitations make the function calling not really feasible but in the close future you will be able to use your computer or other api apps just with your voice,
 AI will be the interface between you and your computer. get in now and be ready for the future!

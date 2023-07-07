@@ -85,6 +85,7 @@ def run():
         #     audio_data = r.record(audio_file)
 
         try:
+            print("starting transcription")
             result_text = recognize_fast_whisper('recorded_audio.wav')
             # Print recognized speech
             # text = r.recognize_google(audio_data)
@@ -112,9 +113,6 @@ def run():
     # Set MQTT client's message callback function
     mqtt_client.on_message = on_message
 
-    # demo mode
-    # result = recognize_fast_whisper('../recorded_audio.wav')
-    # print(result)
     print('✅ whisper ready')
     # Start MQTT client loop to listen for messages
     mqtt_client.loop_forever()

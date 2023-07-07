@@ -12,8 +12,8 @@ import time
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # MQTT broker information
-mqtt_broker = "localhost"
-mqtt_port = 1883
+mqtt_broker = os.getenv('MQTT_BROKER')
+mqtt_port = int(os.getenv('MQTT_PORT'))
 mqtt_topic = "speech_detected" 
 
 def timer_function(duration): 
@@ -89,7 +89,7 @@ mqtt_client = mqtt.Client()
 def on_message(client, userdata, message):
     # Get the text from the incoming MQTT message
     text = message.payload.decode()
-    print("got text {}".format(text))
+    print("User Input for AI: {}".format(text))
     history = ""
     ended = False
     maxIterations = 2
