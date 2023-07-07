@@ -6,13 +6,15 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import paho.mqtt.client as mqtt
 from dotenv import load_dotenv
+import setproctitle
 load_dotenv()
 
 
 def run():
+    setproctitle.setproctitle('Orbit-Module TTS')
     # MQTT broker information
-    mqtt_broker = "localhost"
-    mqtt_port = 1883
+    mqtt_broker = os.getenv('MQTT_BROKER')
+    mqtt_port = int(os.getenv('MQTT_PORT'))
     api_key = os.getenv('ELEVENLABS_API_KEY')
     api_endpoint = "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM"
     mqtt_client = mqtt.Client()

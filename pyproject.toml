@@ -20,6 +20,7 @@ faster-whisper = "^0.6.0"
 pyttsx3 = "^2.90"
 pyobjc = "^9.2"
 mac-say = "^2020.12.3"
+setproctitle = "^1.3.2"
 
 
 [build-system]

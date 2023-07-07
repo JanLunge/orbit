@@ -3,12 +3,17 @@ import paho.mqtt.client as mqtt
 import pyaudio
 import wave
 import audioop
+import os
+import setproctitle
+from dotenv import load_dotenv
+load_dotenv()
 
 def run():
+    setproctitle.setproctitle('Orbit-Module speech_to_text')
     from faster_whisper import WhisperModel
     # MQTT broker information
-    mqtt_broker = "localhost"
-    mqtt_port = 1883
+    mqtt_broker = os.getenv('MQTT_BROKER')
+    mqtt_port = int(os.getenv('MQTT_PORT'))
     mqtt_topic = "microphone_audio"
 
     # Initialize speech recognition

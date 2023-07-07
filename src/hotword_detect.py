@@ -4,14 +4,16 @@ import paho.mqtt.client as mqtt
 import struct 
 from datetime import datetime as dt
 from dotenv import load_dotenv
+import setproctitle
 import os
 load_dotenv()
 
 
 def run():
+    setproctitle.setproctitle('Orbit-Module Hotword')
     # MQTT broker information
-    mqtt_broker = "localhost"
-    mqtt_port = 1883
+    mqtt_broker = os.getenv('MQTT_BROKER')
+    mqtt_port = int(os.getenv('MQTT_PORT'))
     mqtt_topic = "microphone_audio"
 
     # PyAudio configuration

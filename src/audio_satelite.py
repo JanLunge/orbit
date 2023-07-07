@@ -3,11 +3,16 @@ import time
 import sys
 import json
 import paho.mqtt.client as mqtt
+import os
+from dotenv import load_dotenv
+import setproctitle
+load_dotenv()
 
 def run():
+    setproctitle.setproctitle('Orbit-Module Audio-Satelite')
     # MQTT broker information
-    mqtt_broker = "localhost"
-    mqtt_port = 1883
+    mqtt_broker = os.getenv('MQTT_BROKER')
+    mqtt_port = int(os.getenv('MQTT_PORT'))
     mqtt_topic = "microphone_audio"
 
     # PyAudio configuration

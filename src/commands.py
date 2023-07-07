@@ -1,13 +1,14 @@
 import paho.mqtt.client as mqtt
 import json
 import threading
+import os
 from dotenv import load_dotenv
+import setproctitle
 load_dotenv()
 
-
 # MQTT broker information
-mqtt_broker = "localhost"
-mqtt_port = 1883
+mqtt_broker = os.getenv('MQTT_BROKER')
+mqtt_port = int(os.getenv('MQTT_PORT'))
 mqtt_client = mqtt.Client()
 
 commands = {
@@ -18,6 +19,7 @@ commands = {
 }
 
 def on_message(client, userdata, message):
+    setproctitle.setproctitle('Orbit-Module Commands')
     print('yes')
     if message.topic == "command":
         # Get the text from the incoming MQTT message

@@ -7,9 +7,12 @@ from dotenv import load_dotenv
 load_dotenv()
 import threading
 import time
+import setproctitle
 
 # Set OpenAI API credentials
 openai.api_key = os.getenv('OPENAI_API_KEY')
+
+setproctitle.setproctitle('Orbit-Module AI')
 
 # MQTT broker information
 mqtt_broker = os.getenv('MQTT_BROKER')
