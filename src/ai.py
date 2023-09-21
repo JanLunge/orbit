@@ -67,6 +67,7 @@ class KoboldApiLLM():
 
 def generatePrompt(text):
     prompt = ""
+    prompt_history = []
     max_items = 5  # Maximum number of items to take from prompt history
     items_to_take = min(max_items, len(prompt_history))
 
@@ -79,19 +80,19 @@ def generatePrompt(text):
     return prompt
 
 def run():
+    luna = ai('luna')
     def computeLocal(text):
         # import fastchat
         # fastchat.load_model()
-        agent_chain = localLangChain.agent_chain
-        result = agent_chain.predict(input=text)
-        print(result)
-        return result
+        # agent_chain = localLangChain.agent_chain
+        # result = agent_chain.predict(input=text)
+        # print(result)
+        # return result
         prompt = generatePrompt(text)
-        output = llm(prompt, max_tokens=200, stop=["USER:", "\n"])
-        response = output['choices'][0]["text"]
-        print(response)
-        prompt_history.append({"user": text, "assistant": response})
-        return response
+        # output = llm(prompt, max_tokens=200, stop=["USER:", "\n"])
+        output = luna.predict(prompt)
+        print('luna response',output)
+        return output
 
     setproctitle.setproctitle('Orbit-Module AI')
 
@@ -150,7 +151,7 @@ class ai():
     {assistantName}: {{preassistant}}"""
     history = [] # List of dictionaries containing the user and assistant messages
     memory = "" # The memory of the AI with its personality
-    def __init__(self, name="Assistant",preassistant="", memory="", history=[], stop=None):
+    def __init__(self, name="Assistant", preassistant="", memory="", history=[], stop=None):
         self.agentName = name
         self.llm = KoboldApiLLM()
         self.history = history
@@ -177,10 +178,15 @@ class ai():
         for i in items_taken:
             history += i["sender"] + ": " + i["text"] + "\n"
 
-        return self.prompt_template.replace('{memory}', self.memory).replace('{history}', history).replace('{text}', text).replace('{preassistant}', self.preassistant)
+        prompt = self.prompt_template.replace('{memory}', self.memory)
+        prompt = prompt.replace('{history}', history)
+        prompt = prompt.replace('{text}', text)
+        prompt = prompt.replace('{preassistant}', self.preassistant)
+        return prompt
 
     def predict(self, text):
         response = self.llm(self.generatePrompt(text), self.stop)
+        print("prepared prompt:", self.generatePrompt(text))
         self.history.append({"sender": self.userName, "text": text})
         self.history.append({"sender": self.assistantName, "text": response})
         # after each prediction, check if the history is too long maybe compact it
@@ -189,6 +195,8 @@ class ai():
         return response
 
 if __name__ == "__main__":
+    run()
+    pass
     from hyperdb import HyperDB
 
     # vector db for live injected info for simple questions speedup

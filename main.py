@@ -26,10 +26,10 @@ if __name__ == '__main__':
     scripts = [
         'audio_satelite.py', # capture audio from mic and send to mqtt
         'hotword_detect.py', # listen for hotword and send to mqtt
-        'speech_to_text.py'
+        'speech_to_text.py',
         'ai.py',
         'commands.py',
-        'text_to_speech.py',
+        'text_to_speech.py'
     ]
 
     setproctitle.setproctitle("OrbitManager")
