@@ -23,15 +23,18 @@ if __name__ == '__main__':
     import setproctitle
     # clear terminal
     subprocess.call('clear', shell=True)
-    scripts = ['text_to_speech.py', 'ai.py', 'audio_satelite.py', 'commands.py', 'hotword_detect.py', 'speech_to_text.py']
+    scripts = [
+        'audio_satelite.py', # capture audio from mic and send to mqtt
+        'hotword_detect.py', # listen for hotword and send to mqtt
+        'speech_to_text.py'
+        'ai.py',
+        'commands.py',
+        'text_to_speech.py',
+    ]
 
-
-    def set_process_name(new_name):
-        setproctitle.setproctitle(new_name)
-
-    set_process_name("OrbitManager")
+    setproctitle.setproctitle("OrbitManager")
     for script in scripts:
-        process = subprocess.Popen(["python3", "src/"+script], preexec_fn=lambda: set_process_name("CustomProcessName"))
+        process = subprocess.Popen(["python3", "src/"+script])
         print("🚀 started module", process.pid, script)
         processes.append(process)
 
@@ -44,8 +47,7 @@ if __name__ == '__main__':
     input("ℹ️ Press Enter to exit...\n waiting for all 6 modules to start...\n")
 
     # Terminate all subprocesses
-    handle_termination(None, None)
-    # import audio_satelite
+    handle_termination(None, None)  # import audio_satelite
     # import hotword_detect
     # t = [
     #     threads.ThreadBase(audio_satelite.run),
@@ -55,3 +57,4 @@ if __name__ == '__main__':
     #     print('starting thread', x)
     #     x.start()
     # print('lol')
+

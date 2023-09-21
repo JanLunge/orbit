@@ -63,6 +63,9 @@ def run():
 
     def on_message(client, userdata, message):
         if message.topic == "assistant_response":
+            if os.getenv('TTS_ENABLED') == "0":
+                print("TTS is disabled")
+                return
             # start speaking the text
             text = message.payload.decode()
             print("text to speak: {}".format(text))
