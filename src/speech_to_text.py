@@ -6,14 +6,21 @@ import audioop
 import os
 import setproctitle
 from dotenv import load_dotenv
+
 load_dotenv()
 
-def run():
-    setproctitle.setproctitle('Orbit-Module speech_to_text')
+# TODO: cleanup, remove sr
+
+if __name__ == "__main__":
+    # Set process title
+    setproctitle.setproctitle("Orbit-Module speech_to_text")
+
+    # use whisper for speech recognition
     from faster_whisper import WhisperModel
+
     # MQTT broker information
-    mqtt_broker = os.getenv('MQTT_BROKER')
-    mqtt_port = int(os.getenv('MQTT_PORT'))
+    mqtt_broker = os.getenv("MQTT_BROKER")
+    mqtt_port = int(os.getenv("MQTT_PORT"))
     mqtt_topic = "microphone_audio"
 
     # Initialize speech recognition
@@ -32,9 +39,12 @@ def run():
 
     def recognize_fast_whisper(audio_file):
         # variants are large-v2
-        model = WhisperModel("base", device="cpu", compute_type="int8") # or "cuda"
+        model = WhisperModel("base", device="cpu", compute_type="int8")  # or "cuda"
         segments, info = model.transcribe(audio_file, beam_size=5)
-        print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
+        print(
+            "Detected language '%s' with probability %f"
+            % (info.language, info.language_probability)
+        )
         result_text = []
         for segment in segments:
             result_text.append(segment.text)
@@ -47,7 +57,8 @@ def run():
             channels=audio_channels,
             rate=audio_rate,
             input=True,
-            frames_per_buffer=audio_chunk_size)
+            frames_per_buffer=audio_chunk_size,
+        )
 
         # Initialize variables for recording
         frames = []
@@ -80,11 +91,11 @@ def run():
         stream.close()
 
         # Save recorded audio to WAV file
-        with wave.open('recorded_audio.wav', 'wb') as wf:
+        with wave.open("recorded_audio.wav", "wb") as wf:
             wf.setnchannels(audio_channels)
             wf.setsampwidth(audio.get_sample_size(audio.get_format_from_width(2)))
             wf.setframerate(audio_rate)
-            wf.writeframes(b''.join(frames))
+            wf.writeframes(b"".join(frames))
 
         # Recognize speech from recorded audio
         # with sr.AudioFile('../recorded_audio.wav') as audio_file:
@@ -92,14 +103,14 @@ def run():
 
         try:
             print("starting transcription")
-            result_text = recognize_fast_whisper('recorded_audio.wav')
+            result_text = recognize_fast_whisper("recorded_audio.wav")
             # Print recognized speech
             # text = r.recognize_google(audio_data)
             # print("You said:", text)
             # result = model.transcribe("../recorded_audio.wav", fp16=False)
             # user_input = result["text"]
             # print(f"You said: {user_input}")
-            mqtt_client.publish('speech_detected', result_text)
+            mqtt_client.publish("speech_transcribed", result_text)
         except sr.UnknownValueError:
             print("Speech recognition could not understand audio")
 
@@ -114,17 +125,14 @@ def run():
 
     # Connect to MQTT broker and subscribe to topic
     mqtt_client.connect(mqtt_broker, mqtt_port)
-    mqtt_client.subscribe('hotword_detected')
+    mqtt_client.subscribe("hotword_detected")
 
     # Set MQTT client's message callback function
     mqtt_client.on_message = on_message
 
-    print('✅ whisper ready')
+    print("✅ whisper ready")
     # Start MQTT client loop to listen for messages
     mqtt_client.loop_forever()
 
     # Terminate PyAudio
     audio.terminate()
-
-if __name__ == '__main__':
-    run()

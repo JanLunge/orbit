@@ -1,3 +1,5 @@
+# NOT IN USE. ONLY REFERENCE
+
 import openai
 import paho.mqtt.client as mqtt
 from dotenv import load_dotenv
@@ -11,10 +13,18 @@ import setproctitle
 prompt_history = []
 import os
 import requests
-from langchain.chains import ConversationChain, LLMChain, LLMMathChain, TransformChain, SequentialChain
+from langchain.chains import (
+    ConversationChain,
+    LLMChain,
+    LLMMathChain,
+    TransformChain,
+    SequentialChain,
+)
+
 # from langchain.chat_models import ChatOpenAI
 # from langchain.docstore import InMemoryDocstore
 from langchain.llms.base import LLM, Optional, List, Mapping, Any
+
 # from langchain.embeddings.openai import OpenAIEmbeddings
 # from langchain.memory import (
 #     ChatMessageHistory,
@@ -29,12 +39,12 @@ from langchain.prompts.prompt import PromptTemplate
 # from langchain.agents import load_tools
 # from langchain.agents import initialize_agent
 
-Kobold_api_url = 'http://localhost:8888'
+Kobold_api_url = "http://localhost:8888"
 
 
 # command for using koboldcpp
 # python3 koboldcpp.py ~/Downloads/wizard-vicuna-13b-uncensored-superhot-8k.ggmlv3.q4_K_M.bin 8888 --stream --contextsize 8192 --unbantokens --threads 8 --usemlock
-class KoboldApiLLM():
+class KoboldApiLLM:
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         data = {
             "prompt": prompt,
@@ -52,7 +62,7 @@ class KoboldApiLLM():
             "top_p": 0.95,
             # "top_k": 0.6,
             "typical": 1,
-            "frmttriminc": True
+            "frmttriminc": True,
         }
 
         # Add the stop sequences to the data if they are provided
@@ -67,9 +77,13 @@ class KoboldApiLLM():
 
         # Check for the expected keys in the response JSON
         json_response = response.json()
-        if 'results' in json_response and len(json_response['results']) > 0 and 'text' in json_response['results'][0]:
+        if (
+            "results" in json_response
+            and len(json_response["results"]) > 0
+            and "text" in json_response["results"][0]
+        ):
             # Return the generated text
-            text = json_response['results'][0]['text'].strip().replace("'''", "```")
+            text = json_response["results"][0]["text"].strip().replace("'''", "```")
 
             # Remove the stop sequence from the end of the text, if it's there
             if stop is not None:
@@ -80,18 +94,21 @@ class KoboldApiLLM():
             print(text)
             return text
         else:
-            raise ValueError('Unexpected response format from Ooba API')
+            raise ValueError("Unexpected response format from Ooba API")
 
     def __call__(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         return self._call(prompt, stop)
 
+
 # initialize the LLM Object
+
 
 class localLangChain:
     agent_chain = None
     # functions
     from langchain.agents import Tool
     from langchain.tools import DuckDuckGoSearchRun
+
     search = DuckDuckGoSearchRun()
 
     def getTime(query):
@@ -106,61 +123,76 @@ class localLangChain:
         Tool(
             name="Remember",
             func=remember,
-            description="useful for when you need to remember something"
+            description="useful for when you need to remember something",
         ),
         Tool(
             name="Current Search",
             func=search,
-            description="useful for when you need to answer questions about current events or the current state of the world"
+            description="useful for when you need to answer questions about current events or the current state of the world",
         ),
         Tool(
-            name="time",
-            func=getTime,
-            description="useful for getting the current time"
+            name="time", func=getTime, description="useful for getting the current time"
         ),
     ]
     # modes
     # simple = LLMChain with prompt template and memory
     # advanced = LLMAgent with tools history and memory
     # and select between local model and OpenAI
-    from langchain.memory import ConversationBufferMemory  # if you want to use all the memory
+    from langchain.memory import (
+        ConversationBufferMemory,
+    )  # if you want to use all the memory
     from langchain.memory import ConversationBufferWindowMemory
+
     # memory = ConversationBufferWindowMemory(memory_key="chat_history", human_prefix="USER", ai_prefix="ASSISTANT", k=5)
     from langchain.memory import ConversationSummaryBufferMemory
-    mode = os.getenv('AI_MODE')
+
+    mode = os.getenv("AI_MODE")
     provider = os.getenv("AI_PROVIDER")
     # vector store
 
     if provider == "local":
         print("local mode")
-        llm = LlamaCpp(model_path="./models/" + os.getenv('MODEL_PATH'), verbose=True, n_ctx=2048)
+        llm = LlamaCpp(
+            model_path="./models/" + os.getenv("MODEL_PATH"), verbose=True, n_ctx=2048
+        )
     elif provider == "openai":
         from langchain import OpenAI
+
         print("openai mode")
         llm = OpenAI(temperature=0, verbose=True)
     # elif provider == "kobold":
-        # llm = KoboldApiLLM()
+    # llm = KoboldApiLLM()
 
-    memory = ConversationSummaryBufferMemory(llm=llm, memory_key="chat_history", human_prefix="USER",
-                                             ai_prefix="ASSISTANT", max_token_limit=1800)
+    memory = ConversationSummaryBufferMemory(
+        llm=llm,
+        memory_key="chat_history",
+        human_prefix="USER",
+        ai_prefix="ASSISTANT",
+        max_token_limit=1800,
+    )
     # TODO: local history does not use the same template as the local model HUMAN/AI vs USER/ASSISTANT
     if mode == "simple":
         print("simple mode")
         from langchain.callbacks.manager import CallbackManager
         from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+
         callback_manager = CallbackManager([StreamingStdOutCallbackHandler()])
         callback_manager = callback_manager
-        prompt = PromptTemplate(template="""
+        prompt = PromptTemplate(
+            template="""
 {chat_history}
 USER: {input}
 ASSISTANT:
-""", input_variables=["input", "chat_history"])
+""",
+            input_variables=["input", "chat_history"],
+        )
         llm_chain = LLMChain(prompt=prompt, llm=llm, verbose=True, memory=memory)
         agent_chain = llm_chain
     elif mode == "agent":
         print("agent mode")
         from langchain.agents import AgentType
         from langchain.agents import initialize_agent
+
         suffix = """Begin
         {chat_history}
         Question: {input}
@@ -183,8 +215,13 @@ Final Answer: the final answer to the original input question
             input_variables=["input", "chat_history", "agent_scratchpad"],
         )
 
-        agent_chain = initialize_agent(tools, llm, agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION, verbose=True,
-                                       memory=memory)
+        agent_chain = initialize_agent(
+            tools,
+            llm,
+            agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION,
+            verbose=True,
+            memory=memory,
+        )
 
 
 def run():
@@ -210,13 +247,13 @@ def run():
         return result
         prompt = generatePrompt(text)
         output = llm(prompt, max_tokens=200, stop=["USER:", "\n"])
-        response = output['choices'][0]["text"]
+        response = output["choices"][0]["text"]
         print(response)
         prompt_history.append({"user": text, "assistant": response})
         return response
 
     def compute_OpenAI(text):
-        openai.api_key = os.getenv('OPENAI_API_KEY')
+        openai.api_key = os.getenv("OPENAI_API_KEY")
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -225,10 +262,7 @@ def run():
                     "content": "You are a homeassistant please, answer in one sentence and keep things short."
                     # generateProompt(goal, history)
                 },
-                {
-                    "role": "system",
-                    "content": text  # generateProompt(goal, history)
-                },
+                {"role": "system", "content": text},  # generateProompt(goal, history)
             ],
             temperature=0.5,
             max_tokens=1000,
@@ -243,21 +277,21 @@ def run():
         return bot_response
 
     # Set OpenAI API credentials
-    setproctitle.setproctitle('Orbit-Module AI')
+    setproctitle.setproctitle("Orbit-Module AI")
 
     # MQTT broker information
-    mqtt_broker = os.getenv('MQTT_BROKER')
-    mqtt_port = int(os.getenv('MQTT_PORT'))
+    mqtt_broker = os.getenv("MQTT_BROKER")
+    mqtt_port = int(os.getenv("MQTT_PORT"))
     mqtt_topic = "speech_detected"
 
     def timer_function(duration):
         duration = int(duration)
-        print('timer runs', duration)
+        print("timer runs", duration)
         time.sleep(duration)
-        print('timer done')
+        print("timer done")
 
     commands = {
-        'timer': timer_function,
+        "timer": timer_function,
     }
 
     # Pre-prompt for calling external APIs
@@ -368,16 +402,20 @@ def run():
     # Set MQTT client's message callback function
     mqtt_client.on_message = on_message
 
-    print('✅ AI waiting for recognized text')
+    print("✅ AI waiting for recognized text")
     # Start MQTT client loop to listen for messages
     mqtt_client.loop_forever()
 
-class AI():
+
+class AI:
     prompt_template = """User: %s Assistant: """
+
     def __init__(self):
         self.llm = KoboldApiLLM()
+
     def predict(self, text):
-        return self.llm(self.prompt_template.replace('%s',text))
+        return self.llm(self.prompt_template.replace("%s", text))
+
 
 if __name__ == "__main__":
     llm = KoboldApiLLM()

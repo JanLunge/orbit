@@ -6,13 +6,17 @@ import paho.mqtt.client as mqtt
 import os
 from dotenv import load_dotenv
 import setproctitle
+
 load_dotenv()
 
-def run():
-    setproctitle.setproctitle('Orbit-Module Audio-Satelite')
+
+if __name__ == "__main__":
+    # Set process title
+    setproctitle.setproctitle("Orbit-Module Audio-Satelite")
+
     # MQTT broker information
-    mqtt_broker = os.getenv('MQTT_BROKER')
-    mqtt_port = int(os.getenv('MQTT_PORT'))
+    mqtt_broker = os.getenv("MQTT_BROKER")
+    mqtt_port = int(os.getenv("MQTT_PORT"))
     mqtt_topic = "microphone_audio"
 
     # PyAudio configuration
@@ -25,26 +29,28 @@ def run():
     audio = pyaudio.PyAudio()
 
     # Start streaming microphone audio
-    stream = audio.open(format=audio_format,
-                        channels=audio_channels,
-                        rate=audio_rate,
-                        input=True,
-                        frames_per_buffer=audio_chunk_size)
+    stream = audio.open(
+        format=audio_format,
+        channels=audio_channels,
+        rate=audio_rate,
+        input=True,
+        frames_per_buffer=audio_chunk_size,
+    )
 
-    # Initialize MQTT client
+    # Initialize MQTT client. One process is one MQTT client
     mqtt_client = mqtt.Client()
 
     # Connect to MQTT broker
     mqtt_client.connect(mqtt_broker, mqtt_port)
-    print("✅ audio streaming via mqtt to {}".format(mqtt_broker + ":"+ str(mqtt_port)))
-    # Main loop
+    print("✅ audio streaming via mqtt to {}".format(mqtt_broker + ":" + str(mqtt_port)))
+
+    # Main loop. Send audio permanently. Maybe change this in the future so that we don't send audio to everyone who subscribes to the MQTT stream (unsecure)
     while True:
         try:
             # Read audio chunk from microphone
             audio_chunk = stream.read(512)
             # Publish audio chunk to MQTT broker
             mqtt_client.publish(mqtt_topic, audio_chunk)
-
 
         except KeyboardInterrupt:
             # Clean up PyAudio and MQTT client
@@ -53,7 +59,3 @@ def run():
             audio.terminate()
             mqtt_client.disconnect()
             sys.exit()
-
-
-if __name__ == "__main__":
-    run()

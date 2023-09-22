@@ -6,14 +6,20 @@ import os
 import requests
 import json
 
+# load dotenv again because this is a seperate process
 load_dotenv()
 
+# Kobold api is running on a different terminal.
+# TODO: check if the terminal is running kobold api and throw if not.
+Kobold_api_url = "http://localhost:8888"
 
-Kobold_api_url = 'http://localhost:8888'
 
-# command for using koboldcpp
+# example command for using koboldcpp
 # python3 koboldcpp.py ~/Downloads/wizard-vicuna-13b-uncensored-superhot-8k.ggmlv3.q4_K_M.bin 8888 --stream --contextsize 8192 --unbantokens --threads 8 --usemlock
-class KoboldApiLLM():
+
+
+# wrapper for koboldcpp api
+class KoboldApiLLM:
     def _call(self, prompt: str, stop: str = None) -> str:
         data = {
             "prompt": prompt,
@@ -31,7 +37,7 @@ class KoboldApiLLM():
             "top_p": 0.95,
             # "top_k": 0.6,
             "typical": 1,
-            "frmttriminc": True
+            "frmttriminc": True,
         }
 
         # Add the stop sequences to the data if they are provided
@@ -46,9 +52,13 @@ class KoboldApiLLM():
 
         # Check for the expected keys in the response JSON
         json_response = response.json()
-        if 'results' in json_response and len(json_response['results']) > 0 and 'text' in json_response['results'][0]:
+        if (
+            "results" in json_response
+            and len(json_response["results"]) > 0
+            and "text" in json_response["results"][0]
+        ):
             # Return the generated text
-            text = json_response['results'][0]['text'].strip().replace("'''", "```")
+            text = json_response["results"][0]["text"].strip().replace("'''", "```")
 
             # Remove the stop sequence from the end of the text, if it's there
             if stop is not None:
@@ -56,31 +66,17 @@ class KoboldApiLLM():
                     if text.endswith(sequence):
                         text = text[: -len(sequence)].rstrip()
 
-            # Todo: Add the generated text to the prompt history
-            print(text)
             return text
         else:
-            raise ValueError('Unexpected response format from Ooba API')
+            raise ValueError("Unexpected response format from API")
 
     def __call__(self, prompt: str, stop: str = None) -> str:
         return self._call(prompt, stop)
 
-def generatePrompt(text):
-    prompt = ""
-    prompt_history = []
-    max_items = 5  # Maximum number of items to take from prompt history
-    items_to_take = min(max_items, len(prompt_history))
-
-    items_taken = prompt_history[-items_to_take:]
-    print("history used:", items_taken)
-    for i in items_taken:
-        prompt += "USER: " + i["user"] + " ASSISTANT: " + i["assistant"] + "\n"
-    prompt += "USER: " + text + " ASSISTANT:"
-    print(prompt)
-    return prompt
 
 def run():
-    luna = ai('luna')
+    luna = ai("luna")
+
     def computeLocal(text):
         # import fastchat
         # fastchat.load_model()
@@ -91,15 +87,15 @@ def run():
         prompt = generatePrompt(text)
         # output = llm(prompt, max_tokens=200, stop=["USER:", "\n"])
         output = luna.predict(prompt)
-        print('luna response',output)
+        print("luna response", output)
         return output
 
-    setproctitle.setproctitle('Orbit-Module AI')
+    setproctitle.setproctitle("Orbit-Module AI")
 
     # MQTT broker information
-    mqtt_broker = os.getenv('MQTT_BROKER')
-    mqtt_port = int(os.getenv('MQTT_PORT'))
-    mqtt_topic = "speech_detected"
+    mqtt_broker = os.getenv("MQTT_BROKER")
+    mqtt_port = int(os.getenv("MQTT_PORT"))
+    mqtt_topic = "speech_transcribed"
 
     # Initialize MQTT client
     mqtt_client = mqtt.Client()
@@ -111,16 +107,8 @@ def run():
         print("User Input for AI: {}".format(text))
         if text.strip() == "":
             return
-        history = ""
-        ended = False
-        maxIterations = 2
-        currentIteration = 0
-        # Generate a response using OpenAI's GPT-3 model
-        # while not ended and currentIteration < maxIterations:
-        currentIteration += 1
-        goal = text
-        # print("proompt:", generateProompt(goal, history))
 
+        # TODO: allow chatgpt for ppl who dont need nsfw
         provider = os.getenv("AI_PROVIDER")
         # response = ""
         # if(provider == "openai"):
@@ -130,7 +118,6 @@ def run():
 
         mqtt_client.publish("assistant_response", response)
 
-
     # Connect to MQTT broker and subscribe to topic
     mqtt_client.connect(mqtt_broker, mqtt_port)
     mqtt_client.subscribe(mqtt_topic)
@@ -138,50 +125,55 @@ def run():
     # Set MQTT client's message callback function
     mqtt_client.on_message = on_message
 
-    print('✅ AI waiting for recognized text')
+    print("✅ AI waiting for recognized text")
     # Start MQTT client loop to listen for messages
     mqtt_client.loop_forever()
 
-class ai():
+
+class ai:
     userName = "USER"
     assistantName = "ASSISTANT"
     prompt_template = f"""{{memory}}
     {{history}}
     {userName}: {{text}}
     {assistantName}: {{preassistant}}"""
-    history = [] # List of dictionaries containing the user and assistant messages
-    memory = "" # The memory of the AI with its personality
-    def __init__(self, name="Assistant", preassistant="", memory="", history=[], stop=None):
+    history = []  # List of dictionaries containing the user and assistant messages
+    memory = ""  # The memory of the AI with its personality
+
+    def __init__(
+        self, name="Assistant", preassistant="", memory="", history=[], stop=None
+    ):
         self.agentName = name
         self.llm = KoboldApiLLM()
         self.history = history
         self.memory = memory
         self.preassistant = preassistant
         self.stop = stop
+
         # check if character json exits in ./characters/name.json if not create it other wise load it
         if not os.path.exists("./characters/" + name + ".json"):
             with open("./characters/" + name + ".json", "w") as f:
-                json.dump({"name":name,  "description": "","memory": "", "history": []}, f)
+                json.dump(
+                    {"name": name, "description": "", "memory": "", "history": []}, f
+                )
         else:
             with open("./characters/" + name + ".json", "r") as f:
                 data = json.load(f)
                 self.memory = data["memory"]
                 self.history = data["history"]
 
-
-
     def generatePrompt(self, text):
         max_items = 5  # Maximum number of items to take from prompt history
         items_to_take = min(max_items, len(self.history))
         items_taken = self.history[-items_to_take:]
-        history = ''
+        history = ""
         for i in items_taken:
             history += i["sender"] + ": " + i["text"] + "\n"
 
-        prompt = self.prompt_template.replace('{memory}', self.memory)
-        prompt = prompt.replace('{history}', history)
-        prompt = prompt.replace('{text}', text)
-        prompt = prompt.replace('{preassistant}', self.preassistant)
+        prompt = self.prompt_template.replace("{memory}", self.memory)
+        prompt = prompt.replace("{history}", history)
+        prompt = prompt.replace("{text}", text)
+        prompt = prompt.replace("{preassistant}", self.preassistant)
         return prompt
 
     def predict(self, text):
@@ -189,10 +181,11 @@ class ai():
         print("prepared prompt:", self.generatePrompt(text))
         self.history.append({"sender": self.userName, "text": text})
         self.history.append({"sender": self.assistantName, "text": response})
-        # after each prediction, check if the history is too long maybe compact it
-        # also persist the history to a file
+        # TODO: after each prediction, check if the history is too long maybe compact it
+        # TODO: also persist the history to a file
 
         return response
+
 
 if __name__ == "__main__":
     run()
@@ -216,7 +209,7 @@ if __name__ == "__main__":
     db.load("data/commands_hyperdb.pickle.gz")
 
     # Query the HyperDB instance with a text input
-    luna = ai('luna')
+    luna = ai("luna")
     while True:
         question = input("ask something:")
         additionalContext = ""
