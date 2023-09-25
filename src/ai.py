@@ -11,8 +11,6 @@ load_dotenv()
 
 # Kobold api is running on a different terminal.
 # TODO: check if the terminal is running kobold api and throw if not.
-Kobold_api_url = "http://localhost:8888"
-
 
 # example command for using koboldcpp
 # python3 koboldcpp.py ~/Downloads/wizard-vicuna-13b-uncensored-superhot-8k.ggmlv3.q4_K_M.bin 8888 --stream --contextsize 8192 --unbantokens --threads 8 --usemlock
@@ -45,7 +43,7 @@ class KoboldApiLLM:
             data["stop_sequence"] = stop
 
         # Send a POST request to the Kobold API with the data
-        response = requests.post(f"{Kobold_api_url}/api/v1/generate", json=data)
+        response = requests.post(f"{os.getenv('AI_API_URL')}/api/v1/generate", json=data)
 
         # Raise an exception if the request failed
         response.raise_for_status()
@@ -75,21 +73,7 @@ class KoboldApiLLM:
 
 
 def run():
-    luna = ai("luna")
-
-    def computeLocal(text):
-        # import fastchat
-        # fastchat.load_model()
-        # agent_chain = localLangChain.agent_chain
-        # result = agent_chain.predict(input=text)
-        # print(result)
-        # return result
-        prompt = generatePrompt(text)
-        # output = llm(prompt, max_tokens=200, stop=["USER:", "\n"])
-        output = luna.predict(prompt)
-        print("luna response", output)
-        return output
-
+    selectedAI = Ai("luna")
     setproctitle.setproctitle("Orbit-Module AI")
 
     # MQTT broker information
@@ -104,17 +88,15 @@ def run():
     def on_message(client, userdata, message):
         # Get the text from the incoming MQTT message
         text = message.payload.decode()
-        print("User Input for AI: {}".format(text))
         if text.strip() == "":
             return
 
+        print("User Input for AI: {}".format(text))
+
         # TODO: allow chatgpt for ppl who dont need nsfw
         provider = os.getenv("AI_PROVIDER")
-        # response = ""
-        # if(provider == "openai"):
-        #     response = compute_OpenAI(text)
-        # elif(provider == "local"):
-        response = computeLocal(text)
+        response = selectedAI.predict(text)
+        print("luna response", response)
 
         mqtt_client.publish("assistant_response", response)
 
@@ -130,7 +112,7 @@ def run():
     mqtt_client.loop_forever()
 
 
-class ai:
+class Ai:
     userName = "USER"
     assistantName = "ASSISTANT"
     prompt_template = f"""{{memory}}
@@ -162,7 +144,7 @@ class ai:
                 self.memory = data["memory"]
                 self.history = data["history"]
 
-    def generatePrompt(self, text):
+    def generate_prompt(self, text):
         max_items = 5  # Maximum number of items to take from prompt history
         items_to_take = min(max_items, len(self.history))
         items_taken = self.history[-items_to_take:]
@@ -177,8 +159,8 @@ class ai:
         return prompt
 
     def predict(self, text):
-        response = self.llm(self.generatePrompt(text), self.stop)
-        print("prepared prompt:", self.generatePrompt(text))
+        response = self.llm(self.generate_prompt(text), self.stop)
+        print("prepared prompt:", self.generate_prompt(text))
         self.history.append({"sender": self.userName, "text": text})
         self.history.append({"sender": self.assistantName, "text": response})
         # TODO: after each prediction, check if the history is too long maybe compact it
@@ -189,7 +171,8 @@ class ai:
 
 if __name__ == "__main__":
     run()
-    pass
+    exit()
+
     from hyperdb import HyperDB
 
     # vector db for live injected info for simple questions speedup
@@ -209,7 +192,7 @@ if __name__ == "__main__":
     db.load("data/commands_hyperdb.pickle.gz")
 
     # Query the HyperDB instance with a text input
-    luna = ai("luna")
+    luna = Ai("luna")
     while True:
         question = input("ask something:")
         additionalContext = ""
