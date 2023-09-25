@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     # Initialize Porcupine
     porcupine = pvporcupine.create(
-        keyword_paths=["wakewords/Atlas_en_mac_v2_2_0.ppn"],
+        keyword_paths=["wakewords/"+os.getenv('WAKEWORD')],
         access_key=os.getenv("PORCUPINE_ACCESS_KEY"),
     )
 

@@ -42,7 +42,7 @@ if __name__ == "__main__":
     ]
     setproctitle.setproctitle("OrbitManager")
     for script in scripts:
-        process = subprocess.Popen(["python3", "src/" + script])
+        process = subprocess.Popen("python3 src/" + script)
         print("🚀 started module", process.pid, script)
         processes.append(process)
 
