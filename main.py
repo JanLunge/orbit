@@ -1,7 +1,10 @@
-import multiprocessing
-import subprocess
 import signal
 import sys
+import os
+import paho.mqtt.client as mqtt
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # list of all threads we boot up (tts, ai, etc...)
 processes = []
@@ -42,7 +45,7 @@ if __name__ == "__main__":
     ]
     setproctitle.setproctitle("OrbitManager")
     for script in scripts:
-        process = subprocess.Popen("python3 src/" + script)
+        process = subprocess.Popen(["python3","src/" + script])
         print("🚀 started module", process.pid, script)
         processes.append(process)
 
@@ -51,7 +54,14 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, handle_termination)
 
     # Wait for user to input anything. Input resolves on return (Enter)
-    input("ℹ️ Press Enter to exit...\n waiting for all 6 modules to start...\n")
+    # also interaction via chat
+    mqtt_broker = os.getenv("MQTT_BROKER")
+    mqtt_port = int(os.getenv("MQTT_PORT"))
+    mqtt_topic = "speech_transcribed"
+    # Initialize MQTT client
+    mqtt_client = mqtt.Client()
+    mqtt_client.connect(mqtt_broker, mqtt_port)
+    while True:
+        user_text = input("ask something:")
+        mqtt_client.publish(mqtt_topic, user_text)
 
-    # Terminate all subprocesses
-    handle_termination(None, None)
