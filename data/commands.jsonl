@@ -4,3 +4,4 @@
 {"text": "what time is it?", "function": "getTime"}
 {"text": "what day is it?", "function": "getDate"}
 {"text": "what is my name?", "function": "getName"}
+{"text": "set a timer for 5 minutes", "function": "setTimer"}

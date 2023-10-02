@@ -72,6 +72,20 @@ class KoboldApiLLM:
         return self._call(prompt, stop)
 
 
+def extract_slot_values(text, slots):
+    # Split the text into words
+    words = text.split()
+
+    # Zip together words and slots
+    combined = list(zip(words, slots))
+    print(combined)
+
+    # Extract words that don't have the 'O' slot label, ignoring special tokens
+    values = [word for word, slot in combined if slot not in ('O', '<EOS>', '<SOS>')]
+
+    return ' '.join(values)
+
+
 def run():
     selectedAI = Ai("luna")
     setproctitle.setproctitle("Orbit-Module AI")
@@ -93,7 +107,58 @@ def run():
 
         print("User Input for AI: {}".format(text))
 
+        # # Intercept commands here
+        # from ludwig.api import LudwigModel
+        #
+        # # Load the trained model
+        # model = LudwigModel.load("ludwig/results/experiment_run_26/model")
+        #
+        # # Make predictions
+        # data_to_predict = {
+        #     'utterance': [text],
+        # }
+        # predictions = model.predict(data_to_predict)
+        #
+        # print(predictions)
+        #
+        # predictions_df = predictions[0]
+        # intent_predictions = predictions_df['intent_predictions'].tolist()
+        # slots_predictions = predictions_df['slots_predictions'].tolist()
+        #
+        # for text, intent, slots in zip(data_to_predict['utterance'], intent_predictions, slots_predictions):
+        #     slot_value = extract_slot_values(text, slots)
+        #     print(f"Text: {text}\nIntent: {intent}\nSlot Value: {slot_value}\n")
+        #
+        # return
+        from hyperdb import HyperDB
+        # vector db for live injected info for simple questions speedup
+        documents = []
+        with open("data/commands.jsonl", "r") as f:
+            for line in f:
+                documents.append(json.loads(line))
+        # Instantiate HyperDB with the list of documents
+        db = HyperDB(documents, key="text")
+
+        # Save the HyperDB instance to a file
+        db.save("data/commands_hyperdb.pickle.gz")
+
+        # Load the HyperDB instance from the save file
+        db.load("data/commands_hyperdb.pickle.gz")
+
+        additionalContext = ""
+        results = db.query(text, top_k=5)
+        print(results[0][0]["function"], results[0][1])  # trust over 0.88
+        if results[0][1] > 0.88:
+            print("call function", results[0][0]["function"])
+            if results[0][0]["function"] == "getTime":
+                additionalContext = "time is:" + datetime.now().strftime("%H:%M:%S")
+            elif results[0][0]["function"] == "getDate":
+                additionalContext = "date is:" + datetime.now().strftime("%d/%m/%Y")
+        print("additionalContext", additionalContext)
+
         # TODO: allow chatgpt for ppl who dont need nsfw
+        # TODO: ollama support
+        # TODO: add parameter extraction and call functions from llm
         provider = os.getenv("AI_PROVIDER")
         response = selectedAI.predict(text)
         print("luna response", response)

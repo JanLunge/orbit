@@ -72,5 +72,9 @@ using local models works best in simple mode as most ai models do not work well 
 using openai works very well as agent in the advanced mode
 
 
+# training an intent model:
+in the ludwig folder do `ludwig train --dataset sequence_tags.csv --config config.yaml`
+
+
 ## Project Structure
 
