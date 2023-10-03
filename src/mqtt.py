@@ -1,5 +1,6 @@
 import paho.mqtt.client as mqtt
-from env import MQTT_BROKER, MQTT_PORT
+import app_config as env
+
 
 class MqttClient:
     client = None
@@ -7,7 +8,7 @@ class MqttClient:
             self, subscribeTopics=[], onMessage=None
     ):
         self.client = mqtt.Client()
-        self.client.connect(MQTT_BROKER, MQTT_PORT)
+        self.client.connect(env.MQTT_BROKER, env.MQTT_PORT)
         for topic in subscribeTopics:
             self.client.subscribe(topic)
         self.client.on_message = onMessage

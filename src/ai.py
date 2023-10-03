@@ -1,14 +1,13 @@
 from datetime import datetime
 import setproctitle
 import json
-from src.mqtt import MqttClient
-from src.ai.llm import Ai
+from mqtt import MqttClient
+from llm import Ai
 from hyperdb import HyperDB
-
+import subprocess
 if __name__ == "__main__":
     selected_ai = Ai("atlas")
     setproctitle.setproctitle("Orbit-Module AI")
-
     # Define callback function for MQTT client to process incoming messages
     def on_message(client, userdata, message):
         # Get the text from the incoming MQTT message
@@ -34,8 +33,9 @@ if __name__ == "__main__":
 
         additional_context = ""
         results = db.query(text, top_k=5)
+        print("results from hyperdb:", results)
         first_intent, similarity = results[0]  # eg. [{'text': 'what time is it?', 'function': 'getTime'}, 0.88]
-        print('first matched intent', first_intent, similarity)  # trust over 0.88
+        print('first matched intent, similarity:', first_intent, similarity)  # trust over 0.88
         if similarity > 0.88:
             print("call function", first_intent["function"])
             if first_intent["function"] == "getTime":

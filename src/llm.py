@@ -1,8 +1,8 @@
-from src.ai.ollama import OllamaApiLLM
-from src.ai.kobold import KoboldApiLLM
-from src import env
+from ollama import OllamaApiLLM
+from kobold import KoboldApiLLM
 import os
 import json
+import app_config as env
 
 class Ai:
     userName = "USER"

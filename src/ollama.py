@@ -1,6 +1,8 @@
-from src import env
+import app_config as env
 import requests
 import json
+
+
 class OllamaApiLLM:
     def _call(self, prompt: str, stop: str = None) -> str:
         data = {

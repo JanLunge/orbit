@@ -1,6 +1,8 @@
 import requests
 import json
-from src import env
+import app_config as env
+
+
 # wrapper for koboldcpp api
 class KoboldApiLLM:
     def _call(self, prompt: str, stop: str = None) -> str:

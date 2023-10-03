@@ -1,12 +1,7 @@
+import os
 import signal
 import sys
-import os
-from mqtt import MqttClient
-
-from dotenv import load_dotenv
-
-load_dotenv()
-
+import paho.mqtt.client as mqtt
 # list of all threads we boot up (tts, ai, etc...)
 processes = []
 
@@ -32,6 +27,7 @@ if __name__ == "__main__":
     import subprocess
     import setproctitle
 
+    subprocess.Popen(["which", "python3"])
     # clear terminal
     subprocess.call("clear", shell=True)
 
@@ -58,7 +54,11 @@ if __name__ == "__main__":
     # also interaction via chat
 
     # Initialize MQTT client
-    mqtt_client = MqttClient()
+    mqtt_client = mqtt.Client()
+    MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
+    MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+    mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
+
     while True:
         user_text = input("ask something:")
         mqtt_client.publish("speech_transcribed", user_text)

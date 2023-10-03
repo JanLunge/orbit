@@ -1,10 +1,11 @@
 requests~=2.31.0
+pyaudio~=0.2.13
 setproctitle~=1.3.2
 python-dotenv~=1.0.0
-ludwig~=0.8.4
 paho-mqtt~=1.6.1
-pyaudio~=0.2.13
 pvporcupine~=2.2.1
 pygame~=2.5.0
-hyperdb==0.0.18
-openai~=0.27.8
+hyperdb-python==0.1.4
+paho-mqtt==1.6.1
+speechrecognition==3.10.0
+faster_whisper==0.9.0
