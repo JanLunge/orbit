@@ -1,7 +1,8 @@
 import signal
 import sys
 import os
-import paho.mqtt.client as mqtt
+from mqtt import MqttClient
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -55,13 +56,10 @@ if __name__ == "__main__":
 
     # Wait for user to input anything. Input resolves on return (Enter)
     # also interaction via chat
-    mqtt_broker = os.getenv("MQTT_BROKER")
-    mqtt_port = int(os.getenv("MQTT_PORT"))
-    mqtt_topic = "speech_transcribed"
+
     # Initialize MQTT client
-    mqtt_client = mqtt.Client()
-    mqtt_client.connect(mqtt_broker, mqtt_port)
+    mqtt_client = MqttClient()
     while True:
         user_text = input("ask something:")
-        mqtt_client.publish(mqtt_topic, user_text)
+        mqtt_client.publish("speech_transcribed", user_text)
 

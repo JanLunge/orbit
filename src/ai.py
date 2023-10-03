@@ -1,13 +1,12 @@
 from datetime import datetime
 import setproctitle
-import os
 import json
-from src import env
 from src.mqtt import MqttClient
 from src.ai.llm import Ai
+from hyperdb import HyperDB
 
-def run():
-    selectedAI = Ai("atlas")
+if __name__ == "__main__":
+    selected_ai = Ai("atlas")
     setproctitle.setproctitle("Orbit-Module AI")
 
     # Define callback function for MQTT client to process incoming messages
@@ -19,7 +18,6 @@ def run():
 
         print("User Input for AI: {}".format(text))
 
-        from hyperdb import HyperDB
         # vector db for live injected info for simple questions speedup
         documents = []
         with open("data/commands.jsonl", "r") as f:
@@ -50,7 +48,7 @@ def run():
 
         # TODO: allow chatgpt for ppl who dont need nsfw
         # TODO: add parameter extraction and call functions from llm
-        response = selectedAI.predict(text, additional_context=additional_context)
+        response = selected_ai.predict(text, additional_context=additional_context)
         print("Assistant response:", response)
 
         mqtt_client.publish("assistant_response", response)
@@ -61,9 +59,3 @@ def run():
     print("✅ AI waiting for recognized text")
     # Start MQTT client loop to listen for messages
     mqtt_client.run()
-
-
-
-
-if __name__ == "__main__":
-    run()
