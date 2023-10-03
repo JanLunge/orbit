@@ -5,3 +5,4 @@ backups
 .idea
 models/
 /src/intent/ludwig/results
+/data/*.pickle.gz
