@@ -182,11 +182,13 @@ def run():
                 additional_context = "time is:" + datetime.now().strftime("%H:%M:%S")
             elif first_intent["function"] == "getDate":
                 additional_context = "date is:" + datetime.now().strftime("%d/%m/%Y")
+            elif first_intent["function"] == "setTimer":
+                additional_context = "you can set a timer with the function "
         print("added context from intent recognition:", additional_context)
 
         # TODO: allow chatgpt for ppl who dont need nsfw
         # TODO: add parameter extraction and call functions from llm
-        response = selectedAI.predict(text)
+        response = selectedAI.predict(text, additional_context=additional_context)
         print("luna response", response)
 
         mqtt_client.publish("assistant_response", response)
@@ -207,6 +209,7 @@ class Ai:
     assistantName = "ASSISTANT"
     prompt_template = f"""{{memory}}
     {{history}}
+    {{context}}
     {userName}: {{text}}
     {assistantName}: {{preassistant}}"""
     history = []  # List of dictionaries containing the user and assistant messages
@@ -237,7 +240,7 @@ class Ai:
                 self.memory = data["memory"]
                 self.history = data["history"]
 
-    def generate_prompt(self, text):
+    def generate_prompt(self, text, additional_context=""):
         max_items = 5  # Maximum number of items to take from prompt history
         items_to_take = min(max_items, len(self.history))
         items_taken = self.history[-items_to_take:]
@@ -248,12 +251,13 @@ class Ai:
         prompt = self.prompt_template.replace("{memory}", self.memory)
         prompt = prompt.replace("{history}", history)
         prompt = prompt.replace("{text}", text)
+        prompt = prompt.replace("{context}", additional_context)
         prompt = prompt.replace("{preassistant}", self.preassistant)
         return prompt
 
-    def predict(self, text):
+    def predict(self, text, additional_context=""):
         response = self.llm(self.generate_prompt(text), self.stop)
-        print("prepared prompt:", self.generate_prompt(text))
+        print("prepared prompt:", self.generate_prompt(text, additional_context))
         self.history.append({"sender": self.userName, "text": text})
         self.history.append({"sender": self.assistantName, "text": response})
         # TODO: after each prediction, check if the history is too long maybe compact it
