@@ -172,26 +172,24 @@ def run():
         # Load the HyperDB instance from the save file
         db.load("data/commands_hyperdb.pickle.gz")
 
-        additionalContext = ""
+        additional_context = ""
         results = db.query(text, top_k=5)
-        print(results[0][0]["function"], results[0][1])  # trust over 0.88
-        if results[0][1] > 0.88:
-            print("call function", results[0][0]["function"])
-            if results[0][0]["function"] == "getTime":
-                additionalContext = "time is:" + datetime.now().strftime("%H:%M:%S")
-            elif results[0][0]["function"] == "getDate":
-                additionalContext = "date is:" + datetime.now().strftime("%d/%m/%Y")
-        print("additionalContext", additionalContext)
+        first_intent, similarity = results[0]  # eg. [{'text': 'what time is it?', 'function': 'getTime'}, 0.88]
+        print('first matched intent', first_intent, similarity)  # trust over 0.88
+        if similarity > 0.88:
+            print("call function", first_intent["function"])
+            if first_intent["function"] == "getTime":
+                additional_context = "time is:" + datetime.now().strftime("%H:%M:%S")
+            elif first_intent["function"] == "getDate":
+                additional_context = "date is:" + datetime.now().strftime("%d/%m/%Y")
+        print("added context from intent recognition:", additional_context)
 
         # TODO: allow chatgpt for ppl who dont need nsfw
-        # TODO: ollama support
         # TODO: add parameter extraction and call functions from llm
         response = selectedAI.predict(text)
         print("luna response", response)
 
         mqtt_client.publish("assistant_response", response)
-        # MQTT broker information
-
 
     # Initialize MQTT client
     mqtt_client = mqtt.Client()
