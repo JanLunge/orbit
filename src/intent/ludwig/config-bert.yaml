@@ -1,0 +1,32 @@
+input_features:
+  -
+    name: text
+    type: text
+    encoder:
+      type: parallel_cnn
+      encoders:
+        -
+          type: bert
+    preprocessing:
+      tokenizer: bert
+
+output_features:
+  -
+    name: intent
+    type: category
+    reduce_input: sum
+    decoder:
+      num_fc_layers: 1
+      fc_layers:
+        -
+          fc_size: 64
+          dropout: 0.5
+  -
+    name: slots
+    type: sequence
+    decoder:
+      type: tagger
+      fc_layers:
+        -
+          fc_size: 64
+          dropout: 0.5

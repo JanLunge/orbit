@@ -3,3 +3,5 @@ recorded_audio.wav
 .DS_Store
 backups
 .idea
+models/
+/src/intent/ludwig/results

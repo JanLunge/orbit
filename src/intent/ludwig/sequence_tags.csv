@@ -1,0 +1,8 @@
+utterance,intent,slots
+"start a 2 minute timer",start_timer,O O B-duration B-unit O
+"start a timer for 2 minutes and 30 seconds",start_timer O O O O B-duration I-duration O I-duration I-duration
+"set a timer for 13 minutes",start_timer,O O O O B-duration B-unit
+"timer for 70 seconds",start_timer,O O B-duration B-unit
+"3 minute timer",start_timer,B-duration B-unit O
+"exit",exit,O
+"stop all timers",stop_all_timers,O O O
