@@ -5,15 +5,13 @@ import setproctitle
 import os
 import requests
 import json
-
+from env import AI_MODEL, AI_API_URL, AI_PROVIDER, MQTT_BROKER, MQTT_PORT
 # load dotenv again because this is a seperate process
 load_dotenv()
 
-# Kobold api is running on a different terminal.
-# TODO: check if the terminal is running kobold api and throw if not.
-
 # example command for using koboldcpp
 # python3 koboldcpp.py ~/Downloads/wizard-vicuna-13b-uncensored-superhot-8k.ggmlv3.q4_K_M.bin 8888 --stream --contextsize 8192 --unbantokens --threads 8 --usemlock
+
 
 
 # wrapper for koboldcpp api
@@ -43,7 +41,7 @@ class KoboldApiLLM:
             data["stop_sequence"] = stop
 
         # Send a POST request to the Kobold API with the data
-        response = requests.post(f"{os.getenv('AI_API_URL')}/api/v1/generate", json=data)
+        response = requests.post(f"{AI_API_URL}/api/v1/generate", json=data)
 
         # Raise an exception if the request failed
         response.raise_for_status()
@@ -72,31 +70,60 @@ class KoboldApiLLM:
         return self._call(prompt, stop)
 
 
-def extract_slot_values(text, slots):
-    # Split the text into words
-    words = text.split()
+class OllamaApiLLM:
+    def _call(self, prompt: str, stop: str = None) -> str:
+        data = {
+            "model": AI_MODEL,
+            "prompt": prompt,
+        }
 
-    # Zip together words and slots
-    combined = list(zip(words, slots))
-    print(combined)
+        # Add the stop sequences to the data if they are provided
+        if stop is not None:
+            data["stop_sequence"] = stop
 
-    # Extract words that don't have the 'O' slot label, ignoring special tokens
-    values = [word for word, slot in combined if slot not in ('O', '<EOS>', '<SOS>')]
+        # Send a POST request to the Kobold API with the data
+        response = requests.post(f"{AI_API_URL}/api/generate", json=data,stream=True)
 
-    return ' '.join(values)
+        # Raise an exception if the request failed
+        response.raise_for_status()
+        # Buffer for partial lines
+        response_text = ""
+        buffer = ""
 
+        # Iterate over the content in small chunks
+        for chunk in response.iter_content(chunk_size=1024):
+            # Decode the chunk and add it to the buffer
+            buffer += chunk.decode('utf-8')
+
+            # Split by newlines, but keep the last partial line in the buffer
+            lines = buffer.split("\n")
+            for line in lines[:-1]:
+                # print(line)  # Or process the line in some other way
+                # line to json
+                json_line = json.loads(line)
+                if "response" in json_line:
+                    print(json_line['response'], end="")
+                    response_text += json_line['response']
+                else:
+                    print(" ")
+
+            # Keep the last, potentially incomplete line for the next iteration
+            buffer = lines[-1]
+
+        # Handle any remaining content in the buffer after all chunks are processed
+        if buffer:
+            print(buffer)  # Or process the line in some other way
+
+        return response_text.strip().replace("'''", "```")
+
+    def __call__(self, prompt: str, stop: str = None) -> str:
+        return self._call(prompt, stop)
 
 def run():
     selectedAI = Ai("luna")
     setproctitle.setproctitle("Orbit-Module AI")
 
-    # MQTT broker information
-    mqtt_broker = os.getenv("MQTT_BROKER")
-    mqtt_port = int(os.getenv("MQTT_PORT"))
-    mqtt_topic = "speech_transcribed"
 
-    # Initialize MQTT client
-    mqtt_client = mqtt.Client()
 
     # Define callback function for MQTT client to process incoming messages
     def on_message(client, userdata, message):
@@ -159,17 +186,17 @@ def run():
         # TODO: allow chatgpt for ppl who dont need nsfw
         # TODO: ollama support
         # TODO: add parameter extraction and call functions from llm
-        provider = os.getenv("AI_PROVIDER")
         response = selectedAI.predict(text)
         print("luna response", response)
 
         mqtt_client.publish("assistant_response", response)
+        # MQTT broker information
 
-    # Connect to MQTT broker and subscribe to topic
-    mqtt_client.connect(mqtt_broker, mqtt_port)
-    mqtt_client.subscribe(mqtt_topic)
 
-    # Set MQTT client's message callback function
+    # Initialize MQTT client
+    mqtt_client = mqtt.Client()
+    mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
+    mqtt_client.subscribe("speech_transcribed")
     mqtt_client.on_message = on_message
 
     print("✅ AI waiting for recognized text")
@@ -191,13 +218,16 @@ class Ai:
         self, name="Assistant", preassistant="", memory="", history=[], stop=None
     ):
         self.agentName = name
-        self.llm = KoboldApiLLM()
+        if AI_PROVIDER == "kobold":
+            self.llm = KoboldApiLLM()
+        if AI_PROVIDER == "ollama":
+            self.llm = OllamaApiLLM()
         self.history = history
         self.memory = memory
         self.preassistant = preassistant
         self.stop = stop
 
-        # check if character json exits in ./characters/name.json if not create it other wise load it
+        # check if character json exits in ./characters/name.json if not create it otherwise load it
         if not os.path.exists("./characters/" + name + ".json"):
             with open("./characters/" + name + ".json", "w") as f:
                 json.dump(
@@ -236,54 +266,3 @@ class Ai:
 
 if __name__ == "__main__":
     run()
-    exit()
-
-    from hyperdb import HyperDB
-
-    # vector db for live injected info for simple questions speedup
-    documents = []
-
-    # with open("data/commands.jsonl", "r") as f:
-    #     for line in f:
-    #         documents.append(json.loads(line))
-
-    # Instantiate HyperDB with the list of documents
-    db = HyperDB(documents, key="text")
-
-    # Save the HyperDB instance to a file
-    # db.save("data/commands_hyperdb.pickle.gz")
-
-    # Load the HyperDB instance from the save file
-    db.load("data/commands_hyperdb.pickle.gz")
-
-    # Query the HyperDB instance with a text input
-    luna = Ai("luna")
-    while True:
-        question = input("ask something:")
-        additionalContext = ""
-        results = db.query(question, top_k=5)
-        print(results[0][0]["function"], results[0][1])  # trust over 0.88
-        if results[0][1] > 0.88:
-            print("call function", results[0][0]["function"])
-            if results[0][0]["function"] == "getTime":
-                additionalContext = "time is:" + datetime.now().strftime("%H:%M:%S")
-            elif results[0][0]["function"] == "getDate":
-                additionalContext = "date is:" + datetime.now().strftime("%d/%m/%Y")
-
-        luna.predict(question + " \nSYSTEM:" + additionalContext + "")
-
-    # functionCaller = ai('function', preassistant="```", stop="```")
-    # while True:
-    #     question = input("ask something:")
-    #     response = functionCaller.predict(question)
-    #     # check if response is valid json
-    #     print("response",response)
-    #     call = response.split(',')
-    #     if call[0] == 'checkTime':
-    #         timestr = "time is: " + datetime.now().strftime("%H:%M:%S")
-    #         luna.predict(question + " \n(system info :" + timestr + ")")
-    #     elif call[0] == 'checkDate':
-    #         datestr = "date is: " + datetime.now().strftime("%d/%m/%Y")
-    #         luna.predict(question + " \n(system info :" + datestr + ")")
-
-    # run()
