@@ -6,4 +6,4 @@ backups
 models/
 /src/intent/ludwig/results
 /data/*.pickle.gz
-orbitenv
+venv

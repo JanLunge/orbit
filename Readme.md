@@ -63,9 +63,19 @@ and
 
 
 # Setup
+for the first run use `sh run.sh --setup`
+after that just run `sh run.sh`
+-- poetry
 1. get a poetry shell with `poetry shell`
 2. install the dependencies with `poetry install`
 3. then run `python3 main.py` to start the program
+
+on mac os install pyaudo support with ```
+xcode-select --install
+brew remove portaudio
+brew install portaudio
+pip3 install pyaudio
+```
 
 # Notes
 using local models works best in simple mode as most ai models do not work well with the reasoning chains in langchain and will produce nonsense
