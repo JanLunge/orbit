@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # Connect to MQTT broker
     mqtt_client.connect(mqtt_broker, mqtt_port)
-    print("✅ audio streaming via mqtt to {}".format(mqtt_broker + ":" + str(mqtt_port)))
+    print("✅ audio satellite ready and streaming via mqtt to {}".format(mqtt_broker + ":" + str(mqtt_port)))
 
     # Main loop. Send audio permanently. Maybe change this in the future so that we don't send audio to everyone who subscribes to the MQTT stream (unsecure)
     while True:

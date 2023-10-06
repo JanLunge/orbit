@@ -56,6 +56,6 @@ if __name__ == "__main__":
     # Initialize MQTT client
     mqtt_client = MqttClient(subscribeTopics=["speech_transcribed"], onMessage=on_message)
 
-    print("✅ AI waiting for recognized text")
+    print("✅ AI ready and waiting for recognized text")
     # Start MQTT client loop to listen for messages
     mqtt_client.run()
