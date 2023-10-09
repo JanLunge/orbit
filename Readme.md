@@ -113,4 +113,5 @@ pip3 install pyaudio
 4. set .env key for PORCUPINE_ACCESS_KEY https://picovoice.ai/platform/porcupine/
 5. make sure to select your favorite wakeword in the wakewords folder or create one yourself at : link here
 5. if you are using macOS system python instead of homebrew, refer to this: https://github.com/urllib3/urllib3/issues/3020
+5. make sure to install https://github.com/jmorganca/ollama
 6. run sh run.sh --setup
