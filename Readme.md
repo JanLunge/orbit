@@ -110,5 +110,5 @@ brew install portaudio
 pip3 install pyaudio
 
 3. intsall mosquitto and start it
-4. set .env key for PORCUPINE_ACCESS_KEY
+4. set .env key for PORCUPINE_ACCESS_KEY https://picovoice.ai/platform/porcupine/
 5. run sh run.sh --setup
