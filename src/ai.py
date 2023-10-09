@@ -37,43 +37,43 @@ if __name__ == "__main__":
 
         print("User Input for AI: {}".format(text))
 
-        # vector db for live injected info for simple questions speedup
-        documents = []
-        with open("data/commands.jsonl", "r") as f:
-            for line in f:
-                documents.append(json.loads(line))
-        # Instantiate HyperDB with the list of documents
-        db = HyperDB(documents, key="text")
-
-        # Save the HyperDB instance to a file
-        db.save("data/commands_hyperdb.pickle.gz")
-
-        # Load the HyperDB instance from the save file
-        db.load("data/commands_hyperdb.pickle.gz")
-
-        additional_context = ""
-        results = db.query(text, top_k=5)
-        print("results from hyperdb:", results)
-        first_intent, similarity = results[0]  # eg. [{'text': 'what time is it?', 'function': 'getTime'}, 0.88]
-        print('first matched intent, similarity:', first_intent, similarity)  # trust over 0.88
-        if similarity > 0.88:
-            print("call function", first_intent["function"])
-            if first_intent["function"] == "getTime":
-                additional_context = "Additional Context: the current time is:" + datetime.now().strftime("%H:%M:%S")
-            elif first_intent["function"] == "getDate":
-                additional_context = "Additional Context: the current date is:" + datetime.now().strftime("%d/%m/%Y")
-            elif first_intent["function"] == "setTimer":
-                # get the duration from the text
-                # find the first number in th text
-                duration = extract_duration(text)
-                print("duration extracted:", duration)
-                additional_context = "you can set a timer with the function "
-        print("added context from intent recognition:", additional_context)
-
+        # # vector db for live injected info for simple questions speedup
+        # documents = []
+        # with open("data/commands.jsonl", "r") as f:
+        #     for line in f:
+        #         documents.append(json.loads(line))
+        # # Instantiate HyperDB with the list of documents
+        # db = HyperDB(documents, key="text")
+        #
+        # # Save the HyperDB instance to a file
+        # db.save("data/commands_hyperdb.pickle.gz")
+        #
+        # # Load the HyperDB instance from the save file
+        # db.load("data/commands_hyperdb.pickle.gz")
+        #
+        # additional_context = ""
+        # results = db.query(text, top_k=5)
+        # results = []
+        # print("results from hyperdb:", results)
+        # if len(results) != 0:
+        #     first_intent, similarity = results[0]  # eg. [{'text': 'what time is it?', 'function': 'getTime'}, 0.88]
+        #     print('first matched intent, similarity:', first_intent, similarity)  # trust over 0.88
+        #     if similarity > 0.88:
+        #         print("call function", first_intent["function"])
+        #         if first_intent["function"] == "getTime":
+        #             additional_context = "Additional Context: the current time is:" + datetime.now().strftime("%H:%M:%S")
+        #         elif first_intent["function"] == "getDate":
+        #             additional_context = "Additional Context: the current date is:" + datetime.now().strftime("%d/%m/%Y")
+        #         elif first_intent["function"] == "setTimer":
+        #             # get the duration from the text
+        #             # find the first number in th text
+        #             duration = extract_duration(text)
+        #             print("duration extracted:", duration)
+        #             additional_context = "you can set a timer with the function "
+        #     print("added context from intent recognition:", additional_context)
         # TODO: allow chatgpt for ppl who dont need nsfw
         # TODO: add parameter extraction and call functions from llm
-        return
-        response = selected_ai.predict(text, additional_context=additional_context)
+        response = selected_ai.predict(text)
         print("Assistant response:", response)
 
         mqtt_client.publish("assistant_response", response)
