@@ -1,0 +1,8 @@
+{
+  "name": "extract parameters",
+  "description": "extractor",
+  "prompt_template": "USER: write down the duration of the timer in the typical HH:MM:SS format eg 15 minutes and 20 seconds is 0:15:20. please quote the final result like this: `0:15:20`. now do the same for this timer request: '{text}'. Assistant:",
+  "history": [],
+  "memory": ""
+
+}

@@ -39,7 +39,8 @@ class Ai:
                 data = json.load(f)
                 self.memory = data["memory"]
                 self.history = data["history"]
-                self.prompt_template = data["prompt_template"]
+                if "prompt_template" in data:
+                    self.prompt_template = data["prompt_template"]
 
     def generate_prompt(self, text, additional_context=""):
         max_items = 5  # Maximum number of items to take from prompt history

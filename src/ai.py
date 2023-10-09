@@ -5,8 +5,28 @@ from mqtt import MqttClient
 from llm import Ai
 from hyperdb import HyperDB
 import subprocess
+import re
+
+def extract_duration(text):
+    # Define the regex patterns for hours, minutes, and seconds
+    patterns = {
+        "hours": r"(\d+)\s*hours?",
+        "minutes": r"(\d+)\s*minutes?",
+        "seconds": r"(\d+)\s*seconds?"
+    }
+
+    # Store the results here
+    durations = {}
+
+    for unit, pattern in patterns.items():
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            durations[unit] = int(match.group(1))
+
+    return durations
+
 if __name__ == "__main__":
-    selected_ai = Ai("atlas")
+    selected_ai = Ai("auto")
     setproctitle.setproctitle("Orbit-Module AI")
     # Define callback function for MQTT client to process incoming messages
     def on_message(client, userdata, message):
@@ -43,11 +63,16 @@ if __name__ == "__main__":
             elif first_intent["function"] == "getDate":
                 additional_context = "Additional Context: the current date is:" + datetime.now().strftime("%d/%m/%Y")
             elif first_intent["function"] == "setTimer":
+                # get the duration from the text
+                # find the first number in th text
+                duration = extract_duration(text)
+                print("duration extracted:", duration)
                 additional_context = "you can set a timer with the function "
         print("added context from intent recognition:", additional_context)
 
         # TODO: allow chatgpt for ppl who dont need nsfw
         # TODO: add parameter extraction and call functions from llm
+        return
         response = selected_ai.predict(text, additional_context=additional_context)
         print("Assistant response:", response)
 
