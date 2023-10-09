@@ -111,4 +111,5 @@ pip3 install pyaudio
 
 3. intsall mosquitto and start it
 4. set .env key for PORCUPINE_ACCESS_KEY https://picovoice.ai/platform/porcupine/
-5. run sh run.sh --setup
+5. make sure to select your favorite wakeword in the wakewords folder or create one yourself at : link here 
+6. run sh run.sh --setup
