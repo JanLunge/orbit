@@ -98,3 +98,20 @@ start the ollama app and set the AI_PROVIDER to 'ollama' in the .env file
 compile the kobold.cpp based on the instructions then run a model of your choice with the following command:
 `python3 koboldcpp.py ~/Downloads/wizard-vicuna-13b-uncensored-superhot-8k.ggmlv3.q4_K_M.bin 8888 --stream --contextsize 8192 --unbantokens --threads 8 --usemlock`
 set the AI_PROVIDER to 'kobold' in the .env file and the AI_API_URL to the ip of the kobold server with the port (in this case https://localhost:8888)
+
+
+# TODO:
+1. pull
+2. install pyaudio via these commands:
+
+xcode-select --install
+brew remove portaudio
+brew install portaudio
+pip3 install pyaudio
+
+3. intsall mosquitto via brew and start it
+4. set .env key for PORCUPINE_ACCESS_KEY https://picovoice.ai/platform/porcupine/
+5. make sure to select your favorite wakeword in the wakewords folder or create one yourself at : link here
+5. if you are using macOS system python instead of homebrew, refer to this: https://github.com/urllib3/urllib3/issues/3020
+5. make sure to install https://github.com/jmorganca/ollama
+6. run sh run.sh --setup
