@@ -9,11 +9,11 @@ a modular platform for building a voice based LLM assistant</h4>
 </p>
 
 # services
-* ⚙️ Command service for custom executable commands
-* ❗️ Hotword detection with porcupine
-* 🧠 LLM AI integration with OpenAi or local inference (llama.cpp)
-* 🎧 whisper speech recognition
 * 🎤 audio streaming via mqtt (audio_satelite)
+* ❗️ Hotword detection with porcupine
+* 🎧 whisper speech recognition
+* ⚙️ Command service for custom executable commands
+* 🧠 LLM AI integration with OpenAi or local inference (llama.cpp, kobold.cpp, mistral via ollama)
 * 💬 TTS via elevenlabs, pyttsx3 or macos say
 
 ![demo](./assets/demo-shell.gif)
@@ -27,15 +27,16 @@ then the text will be sent to an AI module that will return a response
 then the text will be sent to a command module that will execute the command
 then the response will be sent to a TTS module that will speak the response
 
-This has been tested on an m1 mac
+This tool is mainly built for use on mac and linux but it should work on windows too with a bit of configuration.
+
 
 ## TODOs:
+- [ ] use https://github.com/coqui-ai/TTS for voice clonable output
 - [ ] implement function calling in the ai module so the ai can trigger commands
 - [ ] create a management interface for the function calling
 - [x] support local inference with custom models
-- [ ] switch to something like fastchat instead of llama.cpp for local inference 
 - [ ] support large context models
-- [ ] support multiple wake words
+- [ ] switch wake word to something fully opensource eg. snowboy
 - [ ] saving context in interactions for the ai
 - [ ] vector store for permanent information?
 - [ ] already speak chunks of responses when streaming inference content to speed up response time
@@ -70,7 +71,8 @@ after that just run `sh run.sh`
 2. install the dependencies with `poetry install`
 3. then run `python3 main.py` to start the program
 
-on mac os install pyaudo support with ```
+on mac os install pyaudo support with 
+```
 xcode-select --install
 brew remove portaudio
 brew install portaudio
@@ -109,7 +111,7 @@ brew remove portaudio
 brew install portaudio
 pip3 install pyaudio
 
-3. intsall mosquitto via brew and start it
+3. install mosquitto via brew and start it
 4. set .env key for PORCUPINE_ACCESS_KEY https://picovoice.ai/platform/porcupine/
 5. make sure to select your favorite wakeword in the wakewords folder or create one yourself at : link here
 5. if you are using macOS system python instead of homebrew, refer to this: https://github.com/urllib3/urllib3/issues/3020

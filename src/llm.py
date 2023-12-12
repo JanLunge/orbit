@@ -4,6 +4,7 @@ import os
 import json
 import app_config as env
 
+
 class Ai:
     userName = "USER"
     assistantName = "ASSISTANT"
@@ -14,26 +15,34 @@ class Ai:
     {assistantName}: {{preassistant}}"""
     history = []  # List of dictionaries containing the user and assistant messages
     memory = ""  # The memory of the AI with its personality
+    model = ""
 
     def __init__(
-        self, name="Assistant", preassistant="", memory="", history=[], stop=None
+            self, name="Assistant", preassistant="", memory="", history=[], stop=None, model=None, prompt_template=None
     ):
+        print('initializing with model:', model)
+        if model is not None:
+            self.model = model
+        else:
+            self.model = os.getenv("AI_MODEL")
+        print('initialized with model:', self.model)
         self.agentName = name
+        self.stop = stop
+        print("inited with stop keyword:", self.stop)
         if env.AI_PROVIDER == "kobold":
             self.llm = KoboldApiLLM()
         if env.AI_PROVIDER == "ollama":
-            self.llm = OllamaApiLLM()
+            self.llm = OllamaApiLLM(model=self.model, stop=self.stop)
         self.history = history
         self.memory = memory
         self.preassistant = preassistant
-        self.stop = stop
+        if prompt_template is not None:
+            self.prompt_template = prompt_template
+
 
         # check if character json exits in ./characters/name.json if not create it otherwise load it
         if not os.path.exists("./characters/" + name + ".json"):
-            with open("./characters/" + name + ".json", "w") as f:
-                json.dump(
-                    {"name": name, "description": "", "memory": "", "history": []}, f
-                )
+            self.prompt_template = "{text}"
         else:
             with open("./characters/" + name + ".json", "r") as f:
                 data = json.load(f)
@@ -50,18 +59,20 @@ class Ai:
         for i in items_taken:
             history += i["sender"] + ": " + i["text"] + "\n"
 
-        prompt = self.prompt_template.replace("{memory}", self.memory)
-        prompt = prompt.replace("{history}", history)
-        prompt = prompt.replace("{text}", text)
-        prompt = prompt.replace("{context}", additional_context)
-        prompt = prompt.replace("{preassistant}", self.preassistant)
-        return prompt
+        # prompt = self.prompt_template.replace("{memory}", self.memory)
+        # prompt = prompt.replace("{history}", history)
+        # prompt = prompt.replace("{text}", text)
+        # prompt = prompt.replace("{context}", additional_context)
+        # prompt = prompt.replace("{preassistant}", self.preassistant)
+
+        return text
 
     def predict(self, text, additional_context=""):
-        response = self.llm(self.generate_prompt(text), self.stop)
-        print("prepared prompt:", self.generate_prompt(text, additional_context))
-        self.history.append({"sender": self.userName, "text": text})
-        self.history.append({"sender": self.assistantName, "text": response})
+        response = self.llm(prompt=self.generate_prompt(text))
+        if int(os.getenv("DEBUG_LEVEL")) >= 2:
+            print("prepared prompt:", self.generate_prompt(text, additional_context))
+        # self.history.append({"sender": self.userName, "text": text})
+        # self.history.append({"sender": self.assistantName, "text": response})
         # TODO: after each prediction, check if the history is too long maybe compact it
         # TODO: also persist the history to a file
 
