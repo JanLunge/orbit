@@ -20,15 +20,12 @@ class Ai:
     def __init__(
             self, name="Assistant", preassistant="", memory="", history=[], stop=None, model=None, prompt_template=None
     ):
-        print('initializing with model:', model)
         if model is not None:
             self.model = model
         else:
             self.model = os.getenv("AI_MODEL")
-        print('initialized with model:', self.model)
         self.agentName = name
         self.stop = stop
-        print("inited with stop keyword:", self.stop)
         if env.AI_PROVIDER == "kobold":
             self.llm = KoboldApiLLM()
         if env.AI_PROVIDER == "ollama":

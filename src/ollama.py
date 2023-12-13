@@ -13,13 +13,11 @@ class OllamaApiLLM:
             self.model = model
         if stop is not None:
             self.stop = stop
-        print("inited ollama with model and stop:", self.model, self.stop)
     def _call(self, prompt: str) -> str:
         data = {
             "model": self.model,
             "prompt": prompt,
         }
-        print("modeldata", data)
 
         # Add the stop sequences to the data if they are provided (tested for nexus raven, not for mistral7b) was at just stop before
         if self.stop is not None:

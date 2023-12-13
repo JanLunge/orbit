@@ -20,8 +20,9 @@ if __name__ == "__main__":
 
         # get the top 5 most similar functions for the given query
         functions = find_similar_functions(text, k=10)
-        print("functions close to the prompt:", functions)
-
+        if functions:  # Check if the list is not empty
+            first_elements = [func[0] for func in functions]
+            print("functions that match the prompt:", ', '.join(first_elements))
         # intent classification with nexus raven
         prompt_template = \
             '''
@@ -72,7 +73,6 @@ def no_relevant_function(user_query : str):
 User Query: {query}
 '''
         intent = Ai(model="nexusraven", stop=['Thought:']).predict(prompt_template.format(query=text.replace("'", "")))
-        print("intent:", intent)
         intent = intent.split("Call: ")[1]
         print("intent:", intent)
 

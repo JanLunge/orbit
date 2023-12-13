@@ -1,7 +1,6 @@
 # NOT IN USE RIGHT NOW. THESE ARE THE SKILLS.
 # Test if triggering everything through a vector database is better.
 
-# send an email to my brother.
 
 # maybe use llama 2 function calling model for identifying the chain
 
