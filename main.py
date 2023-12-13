@@ -45,9 +45,9 @@ if __name__ == "__main__":
 
     # Start all subprocesses and put them in the process list
     scripts = [
-        {"script": "audio_satelite.py", "log_prefix": "🎤", "name": "AudioSatelite"},  # capture audio from mic and send via mqtt permanently
-        {"script": "hotword_detect.py", "log_prefix": "❗","name": "HotwordDetection"},  # listen for hotword and send to mqtt
-        {"script": "speech_to_text.py", "log_prefix": "🎧","name": "Transcription"},  # transcribe audio via faster whisper and send to mqtt
+        {"script": "audio.py", "log_prefix": "🎤", "name": "AudioSatelite"},  # capture audio from mic and send via mqtt permanently
+        # {"script": "hotword_detect.py", "log_prefix": "❗","name": "HotwordDetection"},  # listen for hotword and send to mqtt
+        # {"script": "speech_to_text.py", "log_prefix": "🎧","name": "Transcription"},  # transcribe audio via faster whisper and send to mqtt
         {"script": "ai.py", "log_prefix": "🧠", "name": "AI"},  # LLM answering quetions, managing history, etc...
         {"script": "commands.py", "log_prefix": "⚙️ ","name": "Commands"},  # commands like "what is the weather"
         {"script": "text_to_speech.py", "log_prefix": "💬", "name": "VoiceOutput"},  # tts
