@@ -1,13 +1,35 @@
+import subprocess
+
 import requests
 import json
 import io
 import os
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import paho.mqtt.client as mqtt
 from dotenv import load_dotenv
 import setproctitle
+
 load_dotenv()
+
+
+class SpeechSynthesizer:
+    def __init__(self):
+        self.process = None
+
+    def say(self, text):
+        # Terminate any existing process before starting a new one
+        if self.process is not None:
+            self.process.terminate()
+
+        # Start the new speech process
+        self.process = subprocess.Popen(['say', text])
+
+    def abort(self):
+        if self.process is not None:
+            self.process.terminate()
+            self.process = None  # Reset the process
 
 
 def run():
@@ -19,7 +41,6 @@ def run():
     api_endpoint = "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM"
     mqtt_client = mqtt.Client()
     pygame.mixer.init()
-
 
     def getElevenLabsAudio(text):
         # Define the request body
@@ -44,12 +65,11 @@ def run():
         response = requests.post(api_endpoint, headers=request_headers, data=request_body_json)
 
         audio_bytes = io.BytesIO(response.content)
-         # Load the audio bytes using Pygame mixer
+        # Load the audio bytes using Pygame mixer
         pygame.mixer.music.load(audio_bytes)
 
         # Play the audio file
         pygame.mixer.music.play()
-
 
     def getTTS3Audio(text):
         import pyttsx3
@@ -57,9 +77,13 @@ def run():
         engine.say(text)
         engine.runAndWait()
 
+    synthesizer = SpeechSynthesizer()
+
     def macSay(text):
-        import os
-        os.system('say "{}"'.format(text))
+        synthesizer.say(text)
+
+    def abort_speech():
+        synthesizer.abort()
 
     def on_message(client, userdata, message):
         if message.topic == "assistant_response":
@@ -70,17 +94,17 @@ def run():
             text = message.payload.decode()
             print("text to speak: {}".format(text))
             engine = os.getenv('TTS_ENGINE')
-            if(engine=="elevenlabs"):
+            if (engine == "elevenlabs"):
                 getElevenLabsAudio(text)
-            elif(engine=="tts3"):
+            elif (engine == "tts3"):
                 getTTS3Audio(text)
-            elif(engine=="mac"):
+            elif (engine == "mac"):
                 macSay(text)
         if message.topic == "hotword_detected":
             # Play sound that the wakeword was detected
             ping_sound = pygame.mixer.Sound('assets/ping.wav')
             ping_sound.play()
-
+            abort_speech()
 
     # Connect to MQTT broker and subscribe to topic
     mqtt_client.connect(mqtt_broker, mqtt_port)
