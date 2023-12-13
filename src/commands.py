@@ -1,72 +1,195 @@
-# NOT IN USE RIGHT NOW. THESE ARE THE SKILLS.
-# Test if triggering everything through a vector database is better.
-
-
-# maybe use llama 2 function calling model for identifying the chain
-
 import paho.mqtt.client as mqtt
 import json
-import threading
 import os
 from dotenv import load_dotenv
 import setproctitle
-import json
-import os
-
 from datetime import datetime
 from src.ai import selected_ai
+import inspect
 
 load_dotenv()
 
+# Function mapping
+functions = {
+}
+
+
+def add_func(id, exec):
+    signature = inspect.signature(exec)
+    functions[id] = {
+        "exec": exec,
+        "docstring": 'Function:\ndef '+ id + str(signature) + '\n' + '"""' + exec.__doc__ + '"""\n'
+    }
+    print(f"Added function {id}")
+
+
+# Function definitions
+
+def no_relevant_function(user_query: str):
+    """
+    Call this when no other provided function can be called to answer the user query.
+
+    Args:
+    user_query (str): The user's query that could not be addressed by any other function.
+
+    Returns:
+    None: This function does not return any value but prints and publishes the AI's response.
+    """
+    # Log the received query
+    print(f"No relevant function called with query: {user_query}")
+
+    # Get the response from the AI model
+    response = selected_ai.predict(user_query)
+
+    # Log and publish the response
+    print(f"Assistant response: {response}")
+    mqtt_client.publish("assistant_response", response)
+
+
+add_func(id="no_relevant_function", exec=no_relevant_function)
+
+
+def get_time(seconds=False):
+    """
+    tells the user the time
+
+    Args:
+    seconds(bool): if set to true, the seconds will be included in the response, only needed in very specific cases default False.
+
+    Returns:
+    String: the current time in the format HH:MM
+
+    Examples:
+    what time is it?
+    """
+    print("Function call getTime:", datetime.now().strftime("%H:%M"))
+    mqtt_client.publish("assistant_response", 'The current time is ' + datetime.now().strftime("%H:%M"))
+
+add_func(id="get_time", exec=get_time)
+
+def get_date(weekday=False):
+    """
+    tells the user the date
+
+    Args:
+    weekday(bool): if set to true, the weekday will be included in the response, only needed in very specific cases default False.
+
+    Returns:
+    String: the current time in the format HH:MM
+
+    Examples:
+    what day is it?
+    """
+    print("the current date is", datetime.now().strftime("%d/%m/%Y"))
+    mqtt_client.publish("assistant_response", "the current date is " + datetime.now().strftime("%d/%m/%Y"))
+
+add_func(id="get_date", exec=get_date)
+
+def set_timer(hours=None, minutes=None, seconds=None):
+    """
+    sets a timer for the given duration, only used when explicitly asked for a timer.
+
+    Args:
+    hours(Optional): if set adds this amount of hours to the timer.
+    minutes(Optional): If set adds this amount of minutes to the timer.
+    seconds(Optional): If set adds this amount of seconds to the timer.
+
+    Examples:
+    set a timer for 5 minutes
+    remind me in 8 hours
+    """
+    print("setTimer called with", hours, minutes, seconds)
+    hour_text = ""
+    if hours is not None and hours != 0:
+        hour_text = f"{hours} hours"
+    minutes_text = ""
+    if minutes is not None and minutes != 0:
+        minutes_text = f"{minutes} minutes"
+    seconds_text = ""
+    if seconds is not None and seconds != 0:
+        seconds_text = f"{seconds} seconds"
+    response = selected_ai.predict(
+        f"""you just successfully started a timer for {hour_text} {minutes_text} {seconds_text}, as the user requested, please inform them of the duration of the timer that is now running. be straight to the point with no smalltalk.""")
+    if int(os.getenv('DEBUG_LEVEL')) >= 2:
+        print("Assistant response:", response)
+    mqtt_client.publish("assistant_response", response)
+
+add_func(id="set_timer", exec=set_timer)
+
+
+## End of function definitions
+
+# always updates the functions.json files
+def save_functions():
+    # used for the similarity search
+    function_examples = []
+    function_docs = {}
+    for id, obj in functions.items():
+        docstring = functions[id]["docstring"]
+        halves = docstring.split("Examples:\n")
+        func_docstring = ""
+        func_examples = ""
+        if len(halves) > 1:
+            func_docstring = halves[0]
+            func_examples = halves[1].replace('"""\n', "").split("\n")
+            func_examples = [line.strip() for line in halves[1].replace('"""\n', "").split("\n") if line.strip()]
+        else:
+            func_docstring = docstring
+        print(id, func_examples)
+        for example in func_examples:
+            function_examples.append((id, example))
+        function_docs[id] = func_docstring
+
+    with open("./function_examples.json", "w") as f:
+        json.dump(function_examples, f, indent=4)
+
+    with open("./function_docs.json", "w") as f:
+        json.dump(function_docs, f, indent=4)
+    print("saved functions to json files")
+
+save_functions()
+
+def on_message(client, userdata, message):
+    setproctitle.setproctitle("Orbit-Module Commands")
+    if message.topic == "command":
+        payload = message.payload.decode()
+        json_payload = json.loads(payload)
+        intent_str = json_payload["intent"]
+        query = json_payload["query"]
+        print("Received command:", intent_str)
+
+        # Parse the intent string to extract function name and arguments
+        try:
+            func_name, args_str = intent_str.split('(', 1)
+            args_str = args_str.rstrip(')')
+            args = eval(f'dict({args_str})', {}, {})  # Safe eval for arguments
+        except Exception as e:
+            print(f"Error parsing intent: {e}")
+            no_relevant_function(query)
+            return
+
+        # Execute the function if it exists
+        if func_name in functions:
+            try:
+                functions[func_name]["exec"](**args)
+            except TypeError:
+                # Handle case where arguments don't match function signature
+                print(f"Argument mismatch for function {func_name}")
+                no_relevant_function(query)
+        else:
+            print(f"Unknown function: {func_name}")
+            no_relevant_function(query)
+
+
+# MQTT setup
 if __name__ == "__main__":
-    # MQTT broker information
     mqtt_broker = os.getenv("MQTT_BROKER")
     mqtt_port = int(os.getenv("MQTT_PORT"))
     mqtt_client = mqtt.Client()
 
-    def on_message(client, userdata, message):
-        setproctitle.setproctitle("Orbit-Module Commands")
-        if message.topic == "command":
-            # Get the text from the incoming MQTT message
-            payload = message.payload.decode()
-            json_payload = json.loads(payload)
-            intent = json_payload["intent"]
-            query = json_payload["query"]
-            print("got command {} and query {}".format(intent, query))
-            # run the commands function for this command if it exists
-
-            def no_relevant_function(user_query):
-                print("converse called")
-                print("unknown intent")
-                response = selected_ai.predict(query)
-                print("Assistant response:", response)
-                mqtt_client.publish("assistant_response", response)
-
-            def get_time(seconds=False):
-                print("function call getTime:", datetime.now().strftime("%H:%M"))
-                mqtt_client.publish("assistant_response", 'the current time is ' + datetime.now().strftime("%H:%M"))
-
-            def get_date(weekday=False):
-                print("the current date is", datetime.now().strftime("%d/%m/%Y"))
-                mqtt_client.publish("assistant_response", "the current date is " + datetime.now().strftime("%d/%m/%Y"))
-
-            def set_timer(hours=None, minutes=None, seconds=None):
-                print("setTimer called with", hours, minutes, seconds)
-                response = selected_ai.predict(
-                    f"""you just successfully set a timer for {hours} hours, {minutes} minutes and {seconds} seconds, as the user requested, please inform them of this.""")
-                if int(os.getenv('DEBUG_LEVEL')) >= 2:
-                    print("Assistant response:", response)
-                mqtt_client.publish("assistant_response", response)
-
-            exec(intent)
-
-            # TODO: run it in a separate thread
-            # threading.Thread(target=intent).start()
-
-
-    # Connect to MQTT broker and subscribe to topic
     mqtt_client.connect(mqtt_broker, mqtt_port)
     mqtt_client.subscribe("command")
     mqtt_client.on_message = on_message
+
     print("✅ commands ready")
     mqtt_client.loop_forever()

@@ -1,13 +1,19 @@
 import json
+import os
 
 import setproctitle
 from mqtt import MqttClient
 from llm import Ai
 
-from src.similarity_search import find_similar_functions
 selected_ai = Ai("atlas")
+
 if __name__ == "__main__":
+    from src.similarity_search import find_similar_functions
     setproctitle.setproctitle("Orbit-Module AI")
+    function_docs = []
+    if os.path.exists("./function_docs.json"):
+        with open("./function_docs.json", "r") as f:
+            function_docs = json.load(f)
 
     # Define callback function for MQTT client to process incoming messages
     def on_message(client, userdata, message):
@@ -20,46 +26,28 @@ if __name__ == "__main__":
 
         # get the top 5 most similar functions for the given query
         functions = find_similar_functions(text, k=10)
+        unique_intents = []
         if functions:  # Check if the list is not empty
-            first_elements = [func[0] for func in functions]
-            print("functions that match the prompt:", ', '.join(first_elements))
+            # get a list of the top 5 unique intents preserving the order they are listed in
+            for func in functions:
+                if func[0] not in unique_intents:
+                    unique_intents.append(func[0])
+                if len(unique_intents) >= 5:
+                    break
+            print("unique intents:", ', '.join(unique_intents))
+
+        # get the docstring of the top 5 unique intents
+        docstrings = []
+        for intent in unique_intents:
+            if intent in function_docs:
+                docstrings.append(function_docs[intent])
+
+        docstring_prompt = "\n".join(docstrings)
         # intent classification with nexus raven
         prompt_template = \
             '''
 Function:
-def get_time(seconds):
-    """
-    tells the user the time
-    
-    Args:
-    seconds(bool): if set to true, the seconds will be included in the response, only needed in very specific cases default False.
-    
-    Returns:
-    String: the current time in the format HH:MM
-    """
-    
-Function:
-def get_date(weekday):
-    """
-    tells the user the date
-    
-    Args:
-    weekday(bool): if set to true, the weekday will be included in the response, only needed in very specific cases default False.
-    
-    Returns:
-    String: the current time in the format HH:MM
-    """
-    
-Function:
-def set_timer(hours, minutes, seconds):
-    """
-    sets a timer for the given duration, only used when explicitly asked for a timer.
-
-    Args:
-    hours(Optional): if set adds this amount of hours to the timer.
-    minutes(Optional): If set adds this amount of minutes to the timer.
-    seconds(Optional): If set adds this amount of seconds to the timer.
-    """
+{docs}
     
 def no_relevant_function(user_query : str):
   """
@@ -72,13 +60,11 @@ def no_relevant_function(user_query : str):
 
 User Query: {query}
 '''
-        intent = Ai(model="nexusraven", stop=['Thought:']).predict(prompt_template.format(query=text.replace("'", "")))
+        intent = Ai(model="nexusraven", stop=['Thought:']).predict(prompt_template.format(docs=docstring_prompt, query=text.replace("'", "")))
         intent = intent.split("Call: ")[1]
         print("intent:", intent)
 
         mqtt_client.publish("command", json.dumps({"intent": intent, "query": text}))
-
-
 
 
     # Initialize MQTT client
