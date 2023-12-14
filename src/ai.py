@@ -8,7 +8,7 @@ from llm import Ai
 selected_ai = Ai("atlas")
 
 if __name__ == "__main__":
-    from src.similarity_search import find_similar_functions
+    from similarity_search import find_similar_functions
     setproctitle.setproctitle("Orbit-Module AI")
     function_docs = []
     if os.path.exists("./function_docs.json"):

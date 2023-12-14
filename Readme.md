@@ -16,7 +16,7 @@ a modular platform for building a voice based LLM assistant</h4>
 * 🧠 LLM AI integration with OpenAi or local inference (llama.cpp, kobold.cpp, mistral via ollama)
 * 💬 TTS via elevenlabs, pyttsx3 or macos say
 
-![demo](./assets/demo-shell.gif)
+![demo](./assets/usage.gif)
 
 ## what is this?
 Build your own jarvis or alexa/siri/google assistant with this modular platform. 

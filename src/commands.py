@@ -4,23 +4,29 @@ import os
 from dotenv import load_dotenv
 import setproctitle
 from datetime import datetime
-from src.ai import selected_ai
+from llm import Ai
+
 import inspect
 
 load_dotenv()
+selected_ai = Ai("atlas")
 
 # Function mapping
 functions = {
 }
 
 
-def add_func(id, exec):
+def add_func(exec, id=None):
+    name = exec.__name__
+    if id is not None:
+        name = id
     signature = inspect.signature(exec)
-    functions[id] = {
+    functions[name] = {
         "exec": exec,
-        "docstring": 'Function:\ndef '+ id + str(signature) + '\n' + '"""' + exec.__doc__ + '"""\n'
+        "docstring": 'Function:\ndef '+ name + str(signature) + '\n' + '"""' + exec.__doc__ + '"""\n'
     }
-    print(f"Added function {id}")
+    if int(os.getenv('DEBUG_LEVEL')) >= 2:
+        print(f"Added function {name}")
 
 
 # Function definitions
@@ -46,7 +52,7 @@ def no_relevant_function(user_query: str):
     mqtt_client.publish("assistant_response", response)
 
 
-add_func(id="no_relevant_function", exec=no_relevant_function)
+add_func(no_relevant_function)
 
 
 def get_time(seconds=False):
@@ -65,17 +71,34 @@ def get_time(seconds=False):
     print("Function call getTime:", datetime.now().strftime("%H:%M"))
     mqtt_client.publish("assistant_response", 'The current time is ' + datetime.now().strftime("%H:%M"))
 
-add_func(id="get_time", exec=get_time)
+add_func(get_time)
+
+def stop(verbose=False):
+    """
+    interrupts the assistant and stops the current conversation
+
+    Args:
+    verbose(bool): if set to true, logs will be printed to the console, only needed in very specific cases default False.
+
+    Returns:
+    String: the stopped actions
+
+    Examples:
+    stop
+    """
+    print("the assistant was interrupted by the user")
+
+add_func(exec=stop)
 
 def get_date(weekday=False):
     """
-    tells the user the date
+    tells the user the date in the format %d/%m/%Y
 
     Args:
     weekday(bool): if set to true, the weekday will be included in the response, only needed in very specific cases default False.
 
     Returns:
-    String: the current time in the format HH:MM
+    String: the current date in the format %d/%m/%Y
 
     Examples:
     what day is it?
@@ -83,7 +106,7 @@ def get_date(weekday=False):
     print("the current date is", datetime.now().strftime("%d/%m/%Y"))
     mqtt_client.publish("assistant_response", "the current date is " + datetime.now().strftime("%d/%m/%Y"))
 
-add_func(id="get_date", exec=get_date)
+add_func(get_date)
 
 def set_timer(hours=None, minutes=None, seconds=None):
     """
@@ -114,7 +137,7 @@ def set_timer(hours=None, minutes=None, seconds=None):
         print("Assistant response:", response)
     mqtt_client.publish("assistant_response", response)
 
-add_func(id="set_timer", exec=set_timer)
+add_func(set_timer)
 
 
 ## End of function definitions
@@ -135,7 +158,6 @@ def save_functions():
             func_examples = [line.strip() for line in halves[1].replace('"""\n', "").split("\n") if line.strip()]
         else:
             func_docstring = docstring
-        print(id, func_examples)
         for example in func_examples:
             function_examples.append((id, example))
         function_docs[id] = func_docstring
@@ -145,7 +167,6 @@ def save_functions():
 
     with open("./function_docs.json", "w") as f:
         json.dump(function_docs, f, indent=4)
-    print("saved functions to json files")
 
 save_functions()
 

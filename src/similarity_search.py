@@ -58,6 +58,7 @@ if os.path.exists("./functions_docs.json"):
 
 # Check if embeddings are already computed and saved
 sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
+# TODO: create a new model every time the functions.json file is changed (md5)
 if not embeddings_file_exists(embeddings_file):
     print("Embeddings file not found, computing embeddings...")
     # Embed the Docstrings
